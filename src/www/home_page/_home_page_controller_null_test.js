@@ -19,8 +19,34 @@ describe("Home Page Controller", () => {
 	describe("happy paths", () => {
 
 		it("GET renders home page", async () => {
-			const { response } = await simulateGetAsync();
-			assert.deepEqual(response, homePageView.homePage());
+			/* CHALLENGE #1: Using nullable infrastructure
+			 *
+			 * Hints:
+			 *
+			 * 1. You'll need a HomePageController. Easiest way to construct it is with HomePageController.createNull().
+			 *
+			 * 2. You'll need to simulate a GET request. You can do that by calling getAsync() directly. Don't forget to
+			 * 'await' it.
+			 *
+			 * 3. getAsync() expects a 'HttpRequest' object and a 'WwwConfig' object. (The router passes these two
+			 * parameters to every controller method.) Both of them can be instantiated by calling their createNull()
+			 * static methods. E.g., HttpRequest.createNull() and WwwConfig.createNull().
+			 *
+			 * 4. The server expects all controller methods to return an HttpResponse. Functions to create the HttpResponse
+			 * are in HomePageView. There's only one function in there: homePageView.homePage(). It returns the home page.
+			 *
+			 * 5. You'll need an 'expected' value to compare against the results of getAsync(). You can use
+			 * homePageView.homePage() as your expected value.
+			 *
+			 * 6. Use assert.deepEqual() to make the comparison. It checks that the contents of two objects are identical.
+			 *
+			 */
+
+			// Arrange: set up HomePageController, HttpRequest, and WwwConfig
+
+			// Act: call getAsync() -- don't forget to await
+
+			// Assert: check that the result of getAsync() matches homePageView.homePage()
 		});
 
 		it("POST asks ROT-13 service to transform text", async () => {
