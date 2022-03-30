@@ -48,13 +48,12 @@ module.exports = class HomePageController {
 	async postAsync(request, config) {
 		ensure.signature(arguments, [ HttpRequest, WwwConfig ]);
 
-		const { input, inputErr } = parseBody(await request.readBodyAsync(), config.log);
-		if (inputErr !== undefined) return homePageView.homePage();
+		const body = await request.readBodyAsync();
+		const formData = new URLSearchParams(body);
+		const textFields = formData.getAll("text");
+		const userInput = textFields[0];
 
-		const { output, outputErr } = await transformAsync(this._rot13Client, this._clock, config, input);
-		if (outputErr !== undefined) return homePageView.homePage("ROT-13 service failed");
-
-		return homePageView.homePage(output);
+		this._rot13Client.transform(config.rot13ServicePort, userInput);
 	}
 
 };

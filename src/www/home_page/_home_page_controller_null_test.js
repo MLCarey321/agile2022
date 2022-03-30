@@ -14,12 +14,14 @@ const Clock = require("infrastructure/clock");
 const IRRELEVANT_PORT = 42;
 const IRRELEVANT_INPUT = "irrelevant_input";
 
-describe("Home Page Controller", () => {
+describe.only("Home Page Controller", () => {
 
 	describe("happy paths", () => {
 
 		it("GET renders home page", async () => {
 			/* CHALLENGE #1: Using nullable infrastructure
+			 *
+			 * We're going to start off nice and easy.
 			 *
 			 * Hints:
 			 *
@@ -44,17 +46,79 @@ describe("Home Page Controller", () => {
 
 			// Arrange: set up HomePageController, HttpRequest, and WwwConfig
 
-			// Act: call getAsync() -- don't forget to await
+			// Act: call controller.getAsync() -- don't forget to await
 
 			// Assert: check that the result of getAsync() matches homePageView.homePage()
+
 		});
 
 		it("POST asks ROT-13 service to transform text", async () => {
-			const { rot13Requests } = await simulatePostAsync({
-				body: "text=my_text",
-				rot13Port: 9999
-			});
+			/* CHALLENGE #2: Tracking output
+			 *
+			 * This is a lot more challenging! There's three parts to this challenge. Be sure to take it in small steps.
+			 *   a. Calling the ROT-13 service with hard-coded data
+			 *   b. Calling the ROT-13 service with the correct port
+			 *   c. Parsing the form data and calling the ROT-13 service with the correct text
+			 *
+			 * Hints:
+			 *
+			 * 1. Your production code will need to call the ROT-13 service. The way it does so is with Rot13Client.
+			 * When you called HomePageController.createNull() in the last challenge, it created the Rot13Client for you.
+			 * But in this challenge, your test will need to call methods on Rot13Client, so you'll need to create the
+			 * Rot13Client manually and pass it into HomePageController.createNull(). The way to do so is with an optional
+			 * parameter: HomePageController.createNull({ rot13Client }).
+			 *
+			 * 2. Rot13Client can be created with .createNull() just like everything else.
+			 *
+			 * 3. You need to see which requests have been made to the ROT-13 service. You can track requests by calling
+			 * rot13Client.trackRequests(). It returns an array that is updated every time a new request is made. Note that
+			 * you have to call trackRequests() *before* making the request.
+			 *
+			 * 4. Compare the results of trackRequests() to your expected requests using assert.deepEqual(). Note that
+			 * trackRequests() will return an array of objects. Each object represents a single request. For example:
+			 *   assert.deepEqual(rot13Requests, [{
+			 *     port: 123,           // The port of the ROT-13 service
+			 *     text: "some text",   // The text sent to the service
+			 *   }]);
+			 *
+			 * 5. Once you have a simple test written, you can call the ROT-13 service in your production code by calling
+			 * this._rot13Client.transform(port, text). "Port" is the port that the ROT-13 server is running on.
+			 * "Text" is the text you want to transform. Start by hardcoding both of them. Don't worry about the return
+			 * value... that's for the next challenge.
+			 *
+			 * 6. Once the test is passing, change it to use the real ROT-13 port. The port is provided by WwwConfig,
+			 * specifically config.rot13ServicePort. Your test will need to set it up by passing the port into createNull().
+			 * As with all createNull() factories, it uses an optional parameter: WwwConfig.createNull({ rot13ServicePort }).
+			 *
+			 * 7. After you get the port working, you'll need to use the real text. That comes from user's input on the web
+			 * page. Specifically, the web browser will send a request body with URL-encoded form data. It will look like
+			 * this: "text=hello%20world".
+			 *
+			 * 8. In your test, you can set up the request body by using--you guessed it--HttpRequest.createNull({ body }).
+			 *
+			 * 9. In your production code, you can read the request body by using "await request.readBodyAsync()".
+			 *
+			 * 10. To parse the form data, use the standard "URLSearchParams" class. It works like this:
+			 *   const formData = new URLSearchParams(requestBody);   // parse the request body
+			 *   const textFields = formData.getAll("text");  // get an array containing the value of all "text" fields
+			 *   const userInput = textFields[0];
+			 *
+			 * 11. Don't worry about parsing errors or edge cases. That's for a later challenge.
+			 *
+			 */
 
+			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests()
+			const rot13Client = Rot13Client.createNull();
+			const controller = HomePageController.createNull({ rot13Client });
+			const request = HttpRequest.createNull({ body: "text=hello%20world" });
+			const config = WwwConfig.createNull({ rot13ServicePort: 9999 });
+			const rot13Requests = rot13Client.trackRequests();
+
+			// Act: call controller.postAsync() -- don't forget to await
+			await controller.postAsync(request, config);
+
+			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
+			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
 			assert.deepEqual(rot13Requests, [{
 				port: 9999,       // should match config
 				text: "my_text",  // should match post body
@@ -66,12 +130,23 @@ describe("Home Page Controller", () => {
 			const { response } = await simulatePostAsync({ body: "text=my_text", rot13Client });
 
 			assert.deepEqual(response, homePageView.homePage("my_response"));
+				port: 9999,
+				text: "hello world",
+			}]);
 		});
+
+		it.skip("POST renders result of ROT-13 service call", async() => {
+			const rot13Client = Rot13Client.createNull([{ response: "my_response" }]);
+			const { response } = await simulatePostAsync({ body: "text=my_text", rot13Client, rot13Port: 9999 });
+
+			assert.deepEqual(response, homePageView.homePage("my_response"), "home page rendering");
+		});
+
 
 	});
 
 
-	describe("parse edge cases", () => {
+	describe.skip("parse edge cases", () => {
 
 		it("finds correct form field when there are unrelated fields", async () => {
 			const { rot13Requests } = await simulatePostAsync({
@@ -117,7 +192,7 @@ describe("Home Page Controller", () => {
 	});
 
 
-	describe("ROT-13 service edge cases", () => {
+	describe.skip("ROT-13 service edge cases", () => {
 
 		it("fails gracefully, and logs error, when service returns error", async () => {
 			const rot13Client = Rot13Client.createNull([{ error: "my_error" }]);
