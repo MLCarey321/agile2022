@@ -9,9 +9,6 @@ const WwwConfig = require("../www_config");
 const Clock = require("infrastructure/clock");
 const { homePage } = require("./home_page_view");
 
-const INPUT_FIELD_NAME = "text";
-const TIMEOUT_IN_MS = 5000;
-
 /** Endpoints for / (home page) */
 module.exports = class HomePageController {
 
@@ -52,30 +49,3 @@ module.exports = class HomePageController {
 	}
 
 };
-
-async function transformAsync(rot13Client, clock, config, input) {
-	try {
-		const { transformPromise, cancelFn } = rot13Client.transform(config.rot13ServicePort, input);
-		const output = await clock.timeoutAsync(
-			TIMEOUT_IN_MS,
-			transformPromise,
-			() => timeout(config.log, cancelFn));
-		return { output };
-	}
-	catch (outputErr) {
-		config.log.emergency({
-			message: "ROT-13 service error in POST /",
-			error: outputErr,
-		});
-		return { outputErr };
-	}
-}
-
-function timeout(log, cancelFn) {
-	log.emergency({
-		message: "ROT-13 service timed out in POST /",
-		timeoutInMs: TIMEOUT_IN_MS,
-	});
-	cancelFn();
-	return "ROT-13 service timed out";
-}
