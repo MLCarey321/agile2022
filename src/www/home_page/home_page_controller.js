@@ -53,7 +53,9 @@ module.exports = class HomePageController {
 		const textFields = formData.getAll("text");
 		const userInput = textFields[0];
 
-		this._rot13Client.transform(config.rot13ServicePort, userInput);
+		const { transformPromise } = this._rot13Client.transform(config.rot13ServicePort, userInput);
+
+		return homePageView.homePage(await transformPromise);
 	}
 
 };

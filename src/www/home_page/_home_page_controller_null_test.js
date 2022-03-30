@@ -107,7 +107,8 @@ describe.only("Home Page Controller", () => {
 			 *
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests()
+			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
+			// don't forget to pass Rot13Client into HomePageController
 			const rot13Client = Rot13Client.createNull();
 			const controller = HomePageController.createNull({ rot13Client });
 			const request = HttpRequest.createNull({ body: "text=hello%20world" });
@@ -135,13 +136,56 @@ describe.only("Home Page Controller", () => {
 			}]);
 		});
 
-		it.skip("POST renders result of ROT-13 service call", async() => {
+		it("POST renders result of ROT-13 service call", async() => {
+			/* CHALLENGE #3: Configuring responses
+			 *
+			 * This should be easier. It's similar to the last challenge, except this time we're dealing with the
+			 * response from the ROT-13 service, rather than checking that we're calling the ROT-13 service correctly.
+			 *
+			 * Hints:
+			 *
+			 * 1. Just like in the last challenge, you'll need a Rot13Client.
+			 *
+			 * 2. But this time, you'll need to control what data the Rot13Client returns. You can do that by providing
+			 * an array of objects, like this:
+			 *    Rot13Client.createNull([{ response: "my_response" }]);
+			 * That tells the Rot13Client to respond with "my_response" the first time it's called. (If you wanted to
+			 * control additional responses, you can add more objects to the array.)
+			 *
+			 * 3. In your test's assertion, you'll need to check that postAsync returns the correct HttpResponse. It's just
+			 * like the GET test, except you want to render the response into the page. You can do that by calling
+			 * homePageView.homePage("my_response").
+			 *
+			 * 3. In the production code, you'll need to get the response from Rot13Client. It returns an object with a
+			 * transformPromise, like this:
+			 *    const { transformPromise } = this._rot13Client.transform(port, text);
+			 *
+			 * 4. You'll need to await the transformPromise to get the transformed text. Like this:
+			 *    const output = await transformPromise;
+			 *
+			 * 5. Once you have the output, you'll need to render the HttpResponse, just like for the GET challenge.
+			 *
+			 * 6. Don't worry about errors or edge cases. That's for a later challenge.
+			 *
+			 * 7. Once this tests pass, the code should work. Run "serve_dev 5010 5011" from the command-line and try
+			 * accessing the page in a web browser: http://localhost:5010
+			 *
+			 */
+
+			// Arrange: set up HomePageController, HttpRequest, WwwConfig, and Rot13Client -- don't forget to pass
+			// Rot13Client into HomePageController
 			const rot13Client = Rot13Client.createNull([{ response: "my_response" }]);
-			const { response } = await simulatePostAsync({ body: "text=my_text", rot13Client, rot13Port: 9999 });
+			const controller = HomePageController.createNull({ rot13Client });
+			const request = HttpRequest.createNull({ body: "text=hello" });
+			const config = WwwConfig.createNull();
 
-			assert.deepEqual(response, homePageView.homePage("my_response"), "home page rendering");
+			// Act: call controller.postAsync() -- don't forget to await
+			// If you get an error from rot13Client.transform, make sure you're setting up the request body correctly
+			const response = await controller.postAsync(request, config);
+
+			// Assert: check that the result of postAsync() matches homePageView.homePage(expectedText)
+			assert.deepEqual(response, homePageView.homePage("my_response"));
 		});
-
 
 	});
 
