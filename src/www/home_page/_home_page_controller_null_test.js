@@ -242,21 +242,45 @@ describe.only("Home Page Controller", () => {
 	});
 
 
-	describe.skip("ROT-13 service edge cases", () => {
+	describe("ROT-13 service edge cases", () => {
 
 		it("fails gracefully, and logs error, when service returns error", async () => {
-			const rot13Client = Rot13Client.createNull([{ error: "my_error" }]);
-			const { response, logOutput } = await simulatePostAsync({ rot13Client, rot13Port: 9999 });
+			/* CHALLENGE #7: Service errors
+			 *
+			 * Test that the code handles errors in the ROT-13 service gracefully. Log the error and return the home
+			 * page with "ROT-13 service failed" in the text field.
+			 *
+			 * Hints:
+			 *
+			 * 1. This is very similar to challenge #3, except you need to force the Rot13Client to have an error.
+			 * You can do that by passing an "error" property to Rot13Client, rather than a "response" property, like this:
+			 *    const rot13Client = Rot13Client.createNull([{ error: "my_error" }]);
+			 *
+			 * 2. When the Rot13Client encounters an error, it will throw an exception. Your production code will need to
+			 * catch the exception and log the error. I would use "log.emergency()" in this case.
+			 *
+			 * 3. Don't forget to check that the controller returns the correct home page. You don't need to do anything
+			 * fancy; just put the error in the text field, like this:
+			 *    return homePageView.homePage("ROT-13 service failed");
+			 *
+			 */
 
-			assert.deepEqual(response, homePageView.homePage("ROT-13 service failed"));
-			assert.deepEqual(logOutput, [{
-				alert: Log.EMERGENCY,
-				message: "ROT-13 service error in POST /",
-				error: "Error: " + Rot13Client.nullErrorString(9999, "my_error"),
-			}]);
+			// Your test here.
 		});
 
-		it("fails gracefully, cancels request, and logs error, when service responds too slowly", async () => {
+		it.skip("fails gracefully, cancels request, and logs error, when service responds too slowly", async () => {
+			/* CHALLENGE #8: Timeouts
+			 *
+			 * The final challenge! this is a tough one. Test that the code handles timeouts in the ROT-13 service gracefully.
+			 * Log the error and return the home page with "ROT-13 service timed out" in the text field.
+			 *
+			 * Hints:
+			 *
+			 * 4. If you finish all the challenges and still have time, you can make the error handling more sophisticated,
+			 * possibly with a customized response. You can do that by adding a new function to HomePageView.
+			 *
+			 */
+
 			const rot13Client = Rot13Client.createNull([{ hang: true }]);
 			const { responsePromise, rot13Requests, logOutput, clock } = simulatePost({
 				rot13Client,
