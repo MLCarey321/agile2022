@@ -190,23 +190,48 @@ describe.only("Home Page Controller", () => {
 	});
 
 
-	describe.skip("parse edge cases", () => {
+	describe("parse edge cases", () => {
 
 		it("finds correct form field when there are unrelated fields", async () => {
-			const { rot13Requests } = await simulatePostAsync({
-				body: "unrelated=one&text=two&also_unrelated=three"
-			});
+			/* CHALLENGE #4: A minor tweak
+			 *
+			 * This is the same kind of test as challenge #2. Confirm that this request body works:
+			 *    const body = "unrelated=one&text=two&also_unrelated=three";
+			 *
+			 * Hints:
+			 *
+			 * 1. You can use essentially the same code as challenge #2, just with a different request body. Depending
+			 * on how you implemented challenge #2, the production code may work as-is.
+			 *
+			 * 2. Start thinking about how to factor out duplication, but don't implement it yet.
+			 *
+			 * 3. Instead of using beforeEach(), consider a helper method instead, such as "simulatePostAsync()". But
+			 * don't implement anything yet.
+			 */
 
+			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
+			// don't forget to pass Rot13Client into HomePageController
+			const body = "unrelated=one&text=two&also_unrelated=three";
+
+			const rot13Client = Rot13Client.createNull();
+			const controller = HomePageController.createNull({ rot13Client });
+			const request = HttpRequest.createNull({ body });
+			const config = WwwConfig.createNull({ rot13ServicePort: 9999 });
+			const rot13Requests = rot13Client.trackRequests();
+
+			// Act: call controller.postAsync() -- don't forget to await
+			await controller.postAsync(request, config);
+
+			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
+			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
 			assert.deepEqual(rot13Requests, [{
-				port: IRRELEVANT_PORT,
+				port: 9999,
 				text: "two",
 			}]);
 		});
 
-		it("logs warning when form field not found (and treats request like GET)", async () => {
-			const { response, rot13Requests, logOutput } = await simulatePostAsync({
-				body: ""
-			});
+		it.skip("logs warning when form field not found (and treats request like GET)", async () => {
+			const { response, logOutput } = await simulatePostAsync({ body: "" });
 
 			assert.deepEqual(response, homePageView.homePage());
 			assert.deepEqual(rot13Requests, []);
@@ -218,10 +243,9 @@ describe.only("Home Page Controller", () => {
 			}]);
 		});
 
-		it("logs warning when duplicated form field found (and treats request like GET)", async () => {
-			const { response, rot13Requests, logOutput } = await simulatePostAsync({
-				body: "text=one&text=two"
-			});
+		it.skip("logs warning when duplicated form field found (and treats request like GET)", async () => {
+			const body = "text=one&text=two";
+			const { response, logOutput } = await simulatePostAsync({ body });
 
 			assert.deepEqual(response, homePageView.homePage());
 			assert.deepEqual(rot13Requests, []);
