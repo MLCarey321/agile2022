@@ -25,10 +25,10 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * Hints:
 			 *
-			 * 1. You'll need a HomePageController. Easiest way to construct it is with HomePageController.createNull().
+			 * 1. Your test will need a HomePageController. You can construct it with HomePageController.createNull().
 			 *
-			 * 2. You'll need to simulate a GET request. You can do that by calling getAsync() directly. Don't forget to
-			 * 'await' it.
+			 * 2. Your test will need to simulate a GET request. You can do that by calling controller.getAsync(). Don't
+			 * forget to 'await' it.
 			 *
 			 * 3. getAsync() expects a 'HttpRequest' object and a 'WwwConfig' object. (The router passes these two
 			 * parameters to every controller method.) Both of them can be instantiated by calling their createNull()
@@ -200,7 +200,7 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * Hints:
 			 *
-			 * 1. You can use essentially the same code as challenge #2, just with a different request body. Depending
+			 * 1. You can use essentially the same test code as challenge #2, just with a different request body. Depending
 			 * on how you implemented challenge #2, the production code may work as-is.
 			 *
 			 * 2. Start thinking about how to factor out duplication, but don't implement it yet.
@@ -209,8 +209,6 @@ describe.only("Home Page Controller", () => {
 			 * don't implement anything yet.
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
-			// don't forget to pass Rot13Client into HomePageController
 			const body = "unrelated=one&text=two&also_unrelated=three";
 
 			const rot13Client = Rot13Client.createNull();
@@ -219,24 +217,56 @@ describe.only("Home Page Controller", () => {
 			const config = WwwConfig.createNull({ rot13ServicePort: 9999 });
 			const rot13Requests = rot13Client.trackRequests();
 
-			// Act: call controller.postAsync() -- don't forget to await
 			await controller.postAsync(request, config);
 
-			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
-			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
 			assert.deepEqual(rot13Requests, [{
 				port: 9999,
 				text: "two",
 			}]);
 		});
 
-		it.skip("logs warning when form field not found (and treats request like GET)", async () => {
-			const { response, logOutput } = await simulatePostAsync({ body: "" });
+		it("logs warning when form field not found (and treats request like GET)", async () => {
+			/* CHALLENGE #5: Logging
+			 *
+			 * This is similar to challenge #2, except that you're looking at log output rather than ROT-13 service requests.
+			 *
+			 * Hints:
+			 *
+			 * 1. Your test needs a Log instance and to track log output. The methods you're looking for are Log.createNull()
+			 * and log.trackOutput(). trackOutput() works just like trackRequests(), in that it populates an array of
+			 * objects. For example:
+			 *    assert.deepEqual(logOutput, [{
+			 *      alert: "monitor",
+			 *      message: "form parse error in POST /",
+			 *      details: "'text' form field not found",
+			 *      body: "",
+			 *    });
+			 *
+			 * 2. Your production code will get the log from the config object. Be sure to set up your config with your null
+			 * log, like this: Config.createNull({ log })
+			 *
+			 * 3. In your production code, you can log a warning by calling log.monitor() with an object. The logger will
+			 * automatically populate the "alert" field, and will use the object you provide to populate the other fields.
+			 * (In production, the fields are converted to JSON and output to the console.)
+			 *
+			 * 4. Once you have the logging working, be sure to assert that the controller returns the home page. (This is
+			 * similar to challenge #1.)
+			 */
+
+			const body = "";
+
+			const log = Log.createNull();
+			const logOutput = log.trackOutput();
+			const controller = HomePageController.createNull();
+			const request = HttpRequest.createNull({ body });
+			const config = WwwConfig.createNull({ log });
+
+			const response = await controller.postAsync(request, config);
 
 			assert.deepEqual(response, homePageView.homePage());
 			assert.deepEqual(rot13Requests, []);
 			assert.deepEqual(logOutput, [{
-				alert: Log.MONITOR,
+				alert: "monitor",
 				message: "form parse error in POST /",
 				details: "'text' form field not found",
 				body: "",
