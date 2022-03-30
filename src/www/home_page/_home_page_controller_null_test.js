@@ -109,31 +109,11 @@ describe.only("Home Page Controller", () => {
 
 			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
 			// don't forget to pass Rot13Client into HomePageController
-			const rot13Client = Rot13Client.createNull();
-			const controller = HomePageController.createNull({ rot13Client });
-			const request = HttpRequest.createNull({ body: "text=hello%20world" });
-			const config = WwwConfig.createNull({ rot13ServicePort: 9999 });
-			const rot13Requests = rot13Client.trackRequests();
 
 			// Act: call controller.postAsync() -- don't forget to await
-			await controller.postAsync(request, config);
 
 			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
 			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
-			assert.deepEqual(rot13Requests, [{
-				port: 9999,       // should match config
-				text: "my_text",  // should match post body
-			}]);
-		});
-
-		it("POST renders result of ROT-13 service call", async() => {
-			const rot13Client = Rot13Client.createNull([{ response: "my_response" }]);
-			const { response } = await simulatePostAsync({ body: "text=my_text", rot13Client });
-
-			assert.deepEqual(response, homePageView.homePage("my_response"));
-				port: 9999,
-				text: "hello world",
-			}]);
 		});
 
 		it("POST renders result of ROT-13 service call", async() => {
@@ -174,17 +154,11 @@ describe.only("Home Page Controller", () => {
 
 			// Arrange: set up HomePageController, HttpRequest, WwwConfig, and Rot13Client -- don't forget to pass
 			// Rot13Client into HomePageController
-			const rot13Client = Rot13Client.createNull([{ response: "my_response" }]);
-			const controller = HomePageController.createNull({ rot13Client });
-			const request = HttpRequest.createNull({ body: "text=hello" });
-			const config = WwwConfig.createNull();
 
 			// Act: call controller.postAsync() -- don't forget to await
 			// If you get an error from rot13Client.transform, make sure you're setting up the request body correctly
-			const response = await controller.postAsync(request, config);
 
 			// Assert: check that the result of postAsync() matches homePageView.homePage(expectedText)
-			assert.deepEqual(response, homePageView.homePage("my_response"));
 		});
 
 	});
@@ -209,26 +183,14 @@ describe.only("Home Page Controller", () => {
 			 * don't implement anything yet.
 			 */
 
-			const body = "unrelated=one&text=two&also_unrelated=three";
-
-			const rot13Client = Rot13Client.createNull();
-			const controller = HomePageController.createNull({ rot13Client });
-			const request = HttpRequest.createNull({ body });
-			const config = WwwConfig.createNull({ rot13ServicePort: 9999 });
-			const rot13Requests = rot13Client.trackRequests();
-
-			await controller.postAsync(request, config);
-
-			assert.deepEqual(rot13Requests, [{
-				port: 9999,
-				text: "two",
-			}]);
+			// Your test here.
 		});
 
 		it("logs warning when form field not found (and treats request like GET)", async () => {
 			/* CHALLENGE #5: Logging
 			 *
 			 * This is similar to challenge #2, except that you're looking at log output rather than ROT-13 service requests.
+			 * Use an empty request body.
 			 *
 			 * Hints:
 			 *
@@ -253,38 +215,28 @@ describe.only("Home Page Controller", () => {
 			 * similar to challenge #1.)
 			 */
 
-			const body = "";
-
-			const log = Log.createNull();
-			const logOutput = log.trackOutput();
-			const controller = HomePageController.createNull();
-			const request = HttpRequest.createNull({ body });
-			const config = WwwConfig.createNull({ log });
-
-			const response = await controller.postAsync(request, config);
-
-			assert.deepEqual(response, homePageView.homePage());
-			assert.deepEqual(rot13Requests, []);
-			assert.deepEqual(logOutput, [{
-				alert: "monitor",
-				message: "form parse error in POST /",
-				details: "'text' form field not found",
-				body: "",
-			}]);
+			// Your test here.
 		});
 
-		it.skip("logs warning when duplicated form field found (and treats request like GET)", async () => {
-			const body = "text=one&text=two";
-			const { response, logOutput } = await simulatePostAsync({ body });
+		it("logs warning when duplicated form field found (and treats request like GET)", async () => {
+			/* CHALLENGE #6: Refactoring
+			 *
+			 * Before writing this test, look at your existing tests. There's probably a lot of duplication. Think about
+			 * how to refactor it to eliminate the duplication. Then, after the test is working, look at your production
+			 * code and find ways to clean it up.
+			 *
+			 * Use this request body:
+			 *    const body = "text=one&text=two";
+			 *
+			 * Hints:
+			 *
+			 * 1. I used a "simulatePostAsync()" method with optional parameters and multiple optional return values,
+			 * like this:
+			 *    const { response, rot13Requests, logOutput } = simulatePostAsync({ body, rot13Client, rot13Port });
+			 *
+			 */
 
-			assert.deepEqual(response, homePageView.homePage());
-			assert.deepEqual(rot13Requests, []);
-			assert.deepEqual(logOutput, [{
-				alert: Log.MONITOR,
-				message: "form parse error in POST /",
-				details: "multiple 'text' form fields found",
-				body: "text=one&text=two",
-			}]);
+			// Your test here.
 		});
 
 	});

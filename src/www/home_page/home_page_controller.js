@@ -48,47 +48,10 @@ module.exports = class HomePageController {
 	async postAsync(request, config) {
 		ensure.signature(arguments, [ HttpRequest, WwwConfig ]);
 
-		const body = await request.readBodyAsync();
-		const formData = new URLSearchParams(body);
-		const textFields = formData.getAll("text");
-
-		if (textFields.length === 0) {
-			config.log.monitor({
-				message: "form parse error in POST /",
-				details: "'text' form field not found",
-				body,
-			});
-			return homePageView.homePage();
-		}
-
-		const userInput = textFields[0];
-
-		const { transformPromise } = this._rot13Client.transform(config.rot13ServicePort, userInput);
-
-		return homePageView.homePage(await transformPromise);
+		// your production code goes here
 	}
 
 };
-
-function parseBody(body, log) {
-	try {
-		const params = new URLSearchParams(body);
-		const textFields = params.getAll(INPUT_FIELD_NAME);
-
-		if (textFields.length === 0) throw new Error(`'${INPUT_FIELD_NAME}' form field not found`);
-		if (textFields.length > 1) throw new Error(`multiple '${INPUT_FIELD_NAME}' form fields found`);
-
-		return { input: textFields[0] };
-	}
-	catch (inputErr) {
-		log.monitor({
-			message: "form parse error in POST /",
-			details: inputErr.message,
-			body,
-		});
-		return { inputErr };
-	}
-}
 
 async function transformAsync(rot13Client, clock, config, input) {
 	try {
