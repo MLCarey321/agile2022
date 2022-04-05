@@ -39,7 +39,7 @@ module.exports = class HomePageController {
 		/*
 		 * Hint: To implement this method, uncomment the following line.
 		 */
-		// return homePageView.homePage();
+		return homePageView.homePage();
 	}
 
 	async postAsync(request, config) {

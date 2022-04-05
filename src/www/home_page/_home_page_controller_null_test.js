@@ -21,33 +21,56 @@ describe.only("Home Page Controller", () => {
 			 * We're going to start off nice and easy. For this first challenge, all you need to do is make the
 			 * HomePageController return the home page when it receives a GET request.
 			 *
+			 * Useful methods:
+			 *
+			 * 1. const controller = HomePageController.createNull() - create a HomePageController
+			 * 2. const request = HttpRequest.createNull() - create an HttpRequest
+			 * 3. const config = WwwConfig.createNull() - create a WwwConfig
+			 * 4. const response = await controller.getAsync(request, config) - handles the GET request
+			 * 5. const response = homePageView.homePage() - render the home page
+			 * 5. assert.deepEqual(actual, expected) - compare two objects
+			 *
 			 * Hints:
 			 *
-			 * 1. Your test will need a HomePageController. You can construct it with HomePageController.createNull().
+			 * 1. Your test will need a HomePageController. You can construct it with HomePageController.createNull():
+			 *    const controller = HomePageController.createNull();
 			 *
 			 * 2. Your test will need to simulate a GET request. You can do that by calling controller.getAsync(). Don't
 			 * forget to 'await' it.
 			 *
 			 * 3. getAsync() expects a 'HttpRequest' object and a 'WwwConfig' object. (The router passes these two
 			 * parameters to every controller method.) Both of them can be instantiated by calling their createNull()
-			 * static methods. E.g., HttpRequest.createNull() and WwwConfig.createNull().
+			 * static methods:
+			 *    const request = HttpRequest.createNull();
+			 *    const config = WwwConfig.createNull();
+			 *    const response = await controller.getAsync(request, config);
 			 *
-			 * 4. The server expects all controller methods to return an HttpResponse. Functions to create the HttpResponse
-			 * are in HomePageView. There's only one function in there: homePageView.homePage(). It returns the home page.
-			 *
-			 * 5. You'll need an 'expected' value to compare against the results of getAsync(). You can use
+			 * 4. You'll need an 'expected' value to compare against the results of getAsync(). You can use
 			 * homePageView.homePage() as your expected value.
+			 *    const expected = homePageView.homePage();
 			 *
-			 * 6. Use assert.deepEqual() to make the comparison. It checks that the contents of two objects are identical.
+			 * 5. Use assert.deepEqual() to make the comparison. It checks that the contents of two objects are identical.
+			 *    assert.deepEqual(response, expected);
 			 *
+			 * 6. The test is complete. When you save, it will fail with "unexpected undefined to deep equal HttpResponse..."
+			 * This means getAsync() isn't returning a value.
+			 *
+			 * 7. Make the test pass by having getAsync() return the home page:
+			 *    return homePageView.homePage()
 			 */
 
 			// Arrange: set up HomePageController, HttpRequest, and WwwConfig
+			const controller = HomePageController.createNull();
+			const request = HttpRequest.createNull();
+			const config = WwwConfig.createNull();
 
-			// Act: call controller.getAsync() -- don't forget to await
+			// Act: call controller.getAsync() -- don't forget to await (It's not strictly necessary in this case, but
+			// get into the habit of using "await" on Async() methods.)
+			const response = await controller.getAsync(request, config);
 
 			// Assert: check that the result of getAsync() matches homePageView.homePage()
-
+			const expected = homePageView.homePage();
+			assert.deepEqual(response, expected);
 		});
 
 		it("POST asks ROT-13 service to transform text", async () => {
