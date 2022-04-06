@@ -502,17 +502,23 @@ describe.only("Home Page Controller", () => {
 		it("fails gracefully, and logs error, when service returns error", async () => {
 			/* CHALLENGE #7: Service errors
 			 *
-			 * Make sure the code handles errors in the ROT-13 service gracefully. Log the error and return the home
-			 * page with "ROT-13 service failed" in the text field.
+			 * Make sure the code handles errors in the ROT-13 service gracefully. Log the error with the "emergency"
+			 * alert level and return the home page with "ROT-13 service failed" in the text field.
+			 *
+			 * Useful methods:
+			 * 1. const rot13Client = Rot13Client.createNull([{ error: "my_error" }]) - create a Rot13Client that
+			 *      will throw an error with "my_error" in the response body the first time it's called. Note that the
+			 *      parameter is an array of objects. (If you wanted to control additional responses, you would add more
+			 *      objects to the array.)
+			 * 2. log.emergency(data) - write data to the log with the "emergency" alert level. Note that "data" is an
+			 *      object that may contain any fields containing any values.
 			 *
 			 * Hints:
 			 *
-			 * 1. This is very similar to challenge #3, except you need to force the Rot13Client to have an error.
-			 * You can do that by passing an "error" property to Rot13Client, rather than a "response" property, like this:
-			 *    const rot13Client = Rot13Client.createNull([{ error: "my_error" }]);
+			 * 1. This is similar to challenge #3 and challenge #6. Use the tests for those challenges as inspiration.
 			 *
 			 * 2. When the Rot13Client encounters an error, it will throw an exception. Your production code will need to
-			 * catch the exception and log the error. You can use "log.emergency()" to do so.
+			 * catch the exception. In the exception handler, log the error.
 			 *
 			 * 3. Don't forget to check that the controller returns the correct home page. You don't need to do anything
 			 * fancy; just put the error in the text field, like this:
