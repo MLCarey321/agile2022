@@ -104,7 +104,7 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * 2. Your test needs to see which requests have been made to the ROT-13 service. You can do that by calling
 			 * rot13Client.trackRequests(). It returns an array that is updated every time a new request is made. Note that
-			 * you have to call trackRequests() BEFORE making the request:
+			 * you have to call trackRequests() BEFORE making the request.
 			 *    const rot13Requests = rot13Client.trackRequests();
 			 *
 			 * 3. To simulate a POST request, call controller.postAsync(). It expects HttpRequest and WwwConfig parameters,
@@ -123,7 +123,7 @@ describe.only("Home Page Controller", () => {
 			 *      text: "some text",   // The text sent to the service
 			 *    }]);
 			 *
-			 * 5. When you run the test, it will fail saying the actual value is "[]" (an empty array. This means your
+			 * 5. When you run the test, it will fail saying the actual value is "[]" (an empty array). This means your
 			 * production code isn't make any ROT-13 service requests.
 			 *
 			 * 6. You can call the ROT-13 service in your production code by using this._rot13Client.transformAsync().
@@ -191,8 +191,8 @@ describe.only("Home Page Controller", () => {
 		 * 2. const body = await request.readBodyAsync() - read the request body.
 		 * 3. const formData = new URLSearchParams(body) - parse the request body. (URLSearchParams is part of the
 		 *      standard library.)
-		 * 4. const textFields = formData.getAll("text") - get an array containing the values of all "text" fields. It
-		 *      will be empty if there are no "text" fields.
+		 * 4. const textFields = formData.getAll("text") - get an array containing the values of all "text" fields. The
+		 *      array will be empty if there are no "text" fields.
 		 *
 		 * Hints:
 		 *
@@ -226,14 +226,14 @@ describe.only("Home Page Controller", () => {
 		it("POST renders result of ROT-13 service call", async() => {
 			/* CHALLENGE #3: Configuring responses
 			 *
-			 * This should be easier. It's a continuation of the last challenge. In the last challenge, you made the code
-			 * call the ROT-13 server. In this challenge, you need to make it return the correct home page response.
-			 * Specifically, the controller should return a web page with the translated ROT-13 string in the text field.
+			 * In the last challenge, you made the code call the ROT-13 server. In this challenge, you need to make it
+			 * return the correct home page response. Specifically, the controller should return a web page with the
+			 * translated ROT-13 string in the text field.
 			 *
 			 * Don't worry about server errors or edge cases for this challenge.
 			 *
 			 * When this challenge is complete, the code should work end to end. Check it manually as follows:
-			 *    1. Run `.\serve_dev 5010 5011` (Windows) or `./serve_dev.sh 5010 5011` (Mac/Linux) from the command line
+			 *    1. Run `.\serve_dev.cmd 5010 5011` (Windows) or `./serve_dev.sh 5010 5011` (Mac/Linux) on the command line
 			 *    2. Access the page in a web browser: http://localhost:5010
 			 *
 			 * Useful methods:
@@ -317,7 +317,7 @@ describe.only("Home Page Controller", () => {
 			 *      text: "two",         // The text sent to the service
 			 *    }]);
 			 *
-			 * 2. Start thinking about how to factor out duplication, but don't implement it yet. Instead of using
+			 * 3. Start thinking about how to factor out duplication, but don't implement it yet. Instead of using
 			 * beforeEach(), consider a helper method instead, such as "postAsync()". But don't refactor just yet.
 			 */
 
@@ -350,8 +350,8 @@ describe.only("Home Page Controller", () => {
 			 *      to the array. The object has the log's alert level (in the "alert" field) and any other fields that
 			 *      are written in that log entry. Fields containing Error objects are converted to strings.
 			 * 4. const log = config.log - get the logger.
-			 * 5. log.monitor(data) - write data to the log with the "monitor" alert level. Note that "data" is an object
-			 *     that may contain any fields containing any values.
+			 * 5. log.monitor(data) - write data to the log with the "monitor" alert level. "data" must be an object, but
+			 *     it may contain any fields containing any values.
 			 *
 			 * Hints:
 			 *
@@ -371,10 +371,9 @@ describe.only("Home Page Controller", () => {
 			 *    const response = await controller.postAsync(request, config);
 			 *    assert.deepEqual(response, homePageView.homePage());
 			 *
-			 * 5. To break the test into smaller pieces, get this much passing before implementing the logging. When you
+			 * 5. To break the work into smaller pieces, get this much passing before implementing the logging. When you
 			 * run the test, it will probably fail with the error "Argument #2 must be a string, but it was undefined."
-			 * This is happening because formData.getAll("text") is returning an empty array, because it can't find any
-			 * form fields named "text". So "undefined" is being passed into rot13Client.transformAsync().
+			 * This is happening because formData.getAll("text") is returning an empty array.
 			 *
 			 * 6. To fix the production code, introduce a guard clause after the getAll() line:
 			 *    const textFields = formData.getAll("text");   // already exists
@@ -427,7 +426,7 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * 2. In JavaScript, to implement a method that takes optional parameters, use object destructuring. For
 			 * example, the above function is implemented like this:
-			 *    function simulatePost({
+			 *    function simulatePostAsync({
 			 *      body = "text=irrelevant_input",
 			 *      rot13Client = Rot13Client.createNull(),
 			 *      rot13Port = IRRELEVANT_PORT,
@@ -459,11 +458,10 @@ describe.only("Home Page Controller", () => {
 			 * Useful methods:
 			 *
 			 * 1. const rot13Client = Rot13Client.createNull([{ error: "my_error" }]) - create a Rot13Client that
-			 *      will throw an error with "my_error" in the response body the first time it's called. Note that the
-			 *      parameter is an array of objects. (If you wanted to control additional responses, you would add more
-			 *      objects to the array.)
-			 * 2. log.emergency(data) - write data to the log with the "emergency" alert level. Note that "data" is an
-			 *      object that may contain any fields containing any values.
+			 *      will throw an error the first time it's called. Note that the parameter is an array of objects.
+			 *      (If you wanted to control additional responses, you would add more objects to the array.)
+			 * 2. log.emergency(data) - write data to the log with the "emergency" alert level. "data" must be an object,
+			 *      but it may contain any fields containing any values.
 			 *
 			 * Hints:
 			 *
@@ -473,7 +471,7 @@ describe.only("Home Page Controller", () => {
 			 * catch the exception. In the exception handler, log the error.
 			 *
 			 * 3. Don't forget to check that the controller returns the correct home page. You don't need to do anything
-			 * fancy; just put the error in the text field, like this:
+			 * fancy; just put the message in the text field, like this:
 			 *    return homePageView.homePage("ROT-13 service failed");
 			 *
 			 */
@@ -502,12 +500,18 @@ describe.only("Home Page Controller", () => {
 			 *      (If you wanted to control additional responses, you would add more objects to the array.)
 			 * 2. const clock = Clock.createNull() - create a Clock instance that can be advanced programmatically.
 			 * 3. await clock.advanceNullTimersAsync() - advance the clock until all timers expire.
-			 * 4. await clock.timeoutAsync(timeoutInMs, promise, timeoutFn) - set a timer for "timeoutInMs" and await
-			 *      "promise". If the timer runs out before the promise resolves, run timeoutFn and return its result
+			 * 4. await clock.timeoutAsync(timeoutInMs, promise, timeoutFnAsync) - set a timer for "timeoutInMs" and await
+			 *      "promise". If the timer runs out before the promise resolves, run timeoutFnAsync and return its result
 			 *      instead.
 			 * 5. const { transformPromise, cancelFn } = rot13Client.transform(port, text) - just like transformAsync(),
-			 *      except it returns an object with two values. The transformPromise is the same as the return value
-			 *      of transformAsync(). The cancelFn is a function that will cancel the request.
+			 *      except it returns an object with two fields. The transformPromise field is the same as the return value
+			 *      of transformAsync(). The cancelFn field contains a function that will cancel the request. When a
+			 *      request is cancelled, the cancellation appears in the rot13Client.trackRequests() array like this:
+			 *          {
+			 *            port: 9999,
+			 *            text: "my_input",
+			 *            cancelled: true,
+			 *          }
 			 *
 			 * Hints:
 			 *
@@ -523,7 +527,7 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * 3. After calling postAsync(), you can call advanceNullTimersAsync() to automatically advance the clock
 			 * past the timeout. But because you have to call it AFTER calling postAsync(), you can't "await" the result
-			 * of postAsync() in your test. (If you do, your test will hang, because the clock will never advance.)
+			 * of postAsync() in your test. (If you do, your test will hang, because "await postAsync()" will never return.)
 			 * Instead, you have to store the promise, advance the clock, and then await the promise, like this:
 			 *    const responsePromise = controller.postAsync(request, config);
 			 *    await clock.advanceNullTimersAsync();
