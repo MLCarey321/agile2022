@@ -459,7 +459,9 @@ describe.only("Home Page Controller", () => {
 			/* CHALLENGE #6: Refactoring
 			 *
 			 * This is similar to the last challenge, in that you need to handle bad form data and log a warning. Use
-			 * this request body: "text=one&text=two"
+			 * this request body:
+			 *
+			 *    const body = "text=one&text=two";
 			 *
 			 * Before writing this test, look at your existing tests. There's probably a lot of duplication. Think about
 			 * how to refactor it to eliminate the duplication. Then, after the test is working, look at your production
@@ -467,9 +469,25 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * Hints:
 			 *
-			 * 1. I used a "simulatePostAsync()" method with optional parameters and multiple optional return values,
-			 * like this:
+			 * 1. Refactor the test code however you like. I find that helper methods are more useful than beforeEach()
+			 * methods. My approach was to create a postAsync() method that took optional parameters and returned an
+			 * object with multiple fields. It looked like this:
 			 *    const { response, rot13Requests, logOutput } = simulatePostAsync({ body, rot13Client, rot13Port });
+			 *
+			 * 2. In JavaScript, to implement a method that takes optional parameters, use object destructuring. For
+			 * example, the above function is implemented like this:
+			 *    function simulatePost({
+			 *      body = "text=irrelevant_input",
+			 *      rot13Client = Rot13Client.createNull(),
+			 *      rot13Port = IRRELEVANT_PORT,
+			 *    } = {}) {
+			 *      // implementation here
+			 *      return {
+			 *        response,
+			 *        rot13Requests,
+			 *        logOutput,
+			 *      };
+			 *    }
 			 *
 			 */
 
