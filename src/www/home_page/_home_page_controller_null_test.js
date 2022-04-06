@@ -506,6 +506,7 @@ describe.only("Home Page Controller", () => {
 			 * alert level and return the home page with "ROT-13 service failed" in the text field.
 			 *
 			 * Useful methods:
+			 *
 			 * 1. const rot13Client = Rot13Client.createNull([{ error: "my_error" }]) - create a Rot13Client that
 			 *      will throw an error with "my_error" in the response body the first time it's called. Note that the
 			 *      parameter is an array of objects. (If you wanted to control additional responses, you would add more
@@ -543,31 +544,46 @@ describe.only("Home Page Controller", () => {
 			 * to make the error handling more sophisticated, possibly with a customized response. You can do that by
 			 * adding a new function to HomePageView.
 			 *
+			 * Useful methods:
+			 *
+			 * 1. const rot13Client = Rot13Client.createNull([{ hang: "true" }]) - create a Rot13Client that
+			 *      never returns the first time it's called. Note that the parameter is an array of objects.
+			 *      (If you wanted to control additional responses, you would add more objects to the array.)
+			 * 2. const clock = Clock.createNull() - create a Clock instance that can be advanced programmatically.
+			 * 3. await clock.advanceNullTimersAsync() - advance the clock until all timers expire.
+			 * 4. await clock.timeoutAsync(timeoutInMs, promise, timeoutFn) - set a timer for "timeoutInMs" and await
+			 *      "promise". If the timer runs out before the promise resolves, run timeoutFn and return its result
+			 *      instead.
+			 * 5. const { transformPromise, cancelFn } = rot13Client.transform(port, text) - just like transformAsync(),
+			 *      except it returns an object with two values. The transformPromise is the same as the return value
+			 *      of transformAsync(). The cancelFn is a function that will cancel the request.
+			 *
 			 * Hints:
 			 *
 			 * PART (a)
 			 *
-			 * 1. Forcing the ROT-13 service to hang is just like forcing it to have an error. Pass a "hang" property, like
-			 * this:
-			 *    const rot13Client = Rot13Client.createNull([{ hang: true }]);
+			 * 1. Your existing helper methods probably won't work well for this test. Build it from scratch, then look
+			 * for ways to factor out commonalities.
 			 *
 			 * 2. You can use the Clock object to implement timeouts. Be sure to construct a null Clock in your test and
-			 * pass it into HomePageController.createNull(). Then, after calling postAsync(), call advanceNullTimersAsync()
-			 * to automatically advance the clock past the timeout.
+			 * pass it into HomePageController.createNull():
+			 *    const clock = Clock.createNull();
+			 *    const controller = HomePageController.createNull({ clock });
 			 *
-			 * 3. Because you have to call advanceNullTimersAsync AFTER calling postAsync(), you can't "await" the result
-			 * of postAsync() in your test. If you do, the call to advanceNullTimersAsync() will never execute. Instead, you
-			 * have to store the promise, advance the clock, and then await the promise. Like this:
+			 * 3. After calling postAsync(), you can call advanceNullTimersAsync() to automatically advance the clock
+			 * past the timeout. But because you have to call it AFTER calling postAsync(), you can't "await" the result
+			 * of postAsync() in your test. (If you do, your test will hang, because the clock will never advance.)
+			 * Instead, you have to store the promise, advance the clock, and then await the promise, like this:
 			 *    const responsePromise = controller.postAsync(request, config);
 			 *    await clock.advanceNullTimersAsync();
 			 *    const response = await responsePromise;
 			 *
 			 * 4. In your production code, use Clock.timeoutAsync() to implement the timeout, like this:
-			 *    const output = await this._clock.timeoutAsync(timeoutInMs, transformPromise, timeoutFn);
-			 *
-			 * "timeoutInMs" is the number of milliseconds to wait before timing out.
-			 * "transformPromise" is the promise to wait for (in this case, the output of Rot13Client.transform)
-			 * "timeoutFn" is the function to call if the promise times out.
+			 *    const { transformPromise, cancelFn } = rot13Client.transform(config.rot13ServicePort, input);
+			 *    const output = await this._clock.timeoutAsync(timeoutInMs, transformPromise, () => {
+			 *      // log error
+			 *      // return home page
+			 *    ));
 			 *
 			 * PART (b)
 			 *
@@ -586,8 +602,11 @@ describe.only("Home Page Controller", () => {
 			 * 6. In your production code, you can cancel a request by using the "cancelFn" variable returned by
 			 * rot13Client.transform(). Like this:
 			 *    const { transformPromise, cancelFn } = rot13Client.transform(port, text);
-			 *    ...
-			 *    cancelFn();   // cancels the request
+			 *    const output = await this._clock.timeoutAsync(timeoutInMs, transformPromise, () => {
+			 *      // log error
+			 *      cancelFn();
+			 *      // return home page
+			 *    ));
 			 *
 			 * 7. After everything is working, be sure to look for opportunities to refactor the tests and production code.
 			 *
