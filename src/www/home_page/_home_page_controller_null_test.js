@@ -60,17 +60,11 @@ describe.only("Home Page Controller", () => {
 			 */
 
 			// Arrange: set up HomePageController, HttpRequest, and WwwConfig
-			const controller = HomePageController.createNull();
-			const request = HttpRequest.createNull();
-			const config = WwwConfig.createNull();
 
 			// Act: call controller.getAsync() -- don't forget to await (It's not strictly necessary in this case, but
 			// get into the habit of using "await" on Async() methods.)
-			const response = await controller.getAsync(request, config);
 
 			// Assert: check that the result of getAsync() matches homePageView.homePage()
-			const expected = homePageView.homePage();
-			assert.deepEqual(response, expected);
 		});
 
 		it("POST asks ROT-13 service to transform text", async () => {
@@ -141,22 +135,11 @@ describe.only("Home Page Controller", () => {
 
 			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
 			// don't forget to pass Rot13Client into HomePageController
-			const body = "text=hello%20world";
-			const rot13Client = Rot13Client.createNull();
-			const controller = HomePageController.createNull({ rot13Client });
-			const rot13Requests = rot13Client.trackRequests();
-			const request = HttpRequest.createNull({ body });
-			const config = WwwConfig.createNull({ rot13ServicePort: 999 });
 
 			// Act: call controller.postAsync() -- don't forget to await
-			await controller.postAsync(request, config);
 
 			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
 			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
-			assert.deepEqual(rot13Requests, [{
-				port: 999,           // The port of the ROT-13 service
-				text: "hello world",   // The text sent to the service
-			}]);
 		});
 
 		/* CHALLENGE #2b: Dynamic port
@@ -302,18 +285,11 @@ describe.only("Home Page Controller", () => {
 
 			// Arrange: set up HomePageController, HttpRequest, WwwConfig, and Rot13Client -- don't forget to pass
 			// Rot13Client into HomePageController
-			const rot13Client = Rot13Client.createNull([{ response: "my_response" }]);
-			const request = HttpRequest.createNull({ body: "text=irrelevant_text" });
-			const controller = HomePageController.createNull({ rot13Client });
-			const config = WwwConfig.createNull();
 
 			// Act: call controller.postAsync() -- don't forget to await
 			// If you get an error from rot13Client.transform, make sure you're setting up the request body correctly
-			const response = await controller.postAsync(request, config);
 
 			// Assert: check that the result of postAsync() matches homePageView.homePage(expectedText)
-			const expected = homePageView.homePage("my_response");
-			assert.deepEqual(response, expected);
 		});
 
 	});
@@ -347,22 +323,11 @@ describe.only("Home Page Controller", () => {
 
 			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
 			// don't forget to pass Rot13Client into HomePageController
-			const body = "unrelated=one&text=two&also_unrelated=three";
-			const rot13Client = Rot13Client.createNull();
-			const controller = HomePageController.createNull({ rot13Client });
-			const rot13Requests = rot13Client.trackRequests();
-			const request = HttpRequest.createNull({ body });
-			const config = WwwConfig.createNull({ rot13ServicePort: 999 });
 
 			// Act: call controller.postAsync() -- don't forget to await
-			await controller.postAsync(request, config);
 
 			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
 			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
-			assert.deepEqual(rot13Requests, [{
-				port: 999,           // The port of the ROT-13 service
-				text: "two",   // The text sent to the service
-			}]);
 		});
 
 		it("logs warning when form field not found (and treats request like GET)", async () => {
@@ -439,20 +404,6 @@ describe.only("Home Page Controller", () => {
 			 */
 
 			// Your test here.
-			const log = Log.createNull();
-			const config = WwwConfig.createNull({ log });
-			const logOutput = log.trackOutput();
-			const request = HttpRequest.createNull({ body: "" });
-			const controller = HomePageController.createNull();
-
-			const response = await controller.postAsync(request, config);
-			assert.deepEqual(response, homePageView.homePage());
-			assert.deepEqual(logOutput, [{
-				alert: "monitor",
-				message: "form parse error in POST /",
-				details: "'text' form field not found",
-				body: "",
-			}]);
 		});
 
 		it("logs warning when duplicated form field found (and treats request like GET)", async () => {
