@@ -23,12 +23,12 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * Useful methods:
 			 *
-			 * 1. const controller = HomePageController.createNull() - create a HomePageController
-			 * 2. const request = HttpRequest.createNull() - create an HttpRequest
-			 * 3. const config = WwwConfig.createNull() - create a WwwConfig
-			 * 4. const response = await controller.getAsync(request, config) - handles the GET request
-			 * 5. const response = homePageView.homePage() - render the home page
-			 * 5. assert.deepEqual(actual, expected) - compare two objects
+			 * 1. const controller = HomePageController.createNull() - create a HomePageController.
+			 * 2. const request = HttpRequest.createNull() - create an HttpRequest.
+			 * 3. const config = WwwConfig.createNull() - create a WwwConfig.
+			 * 4. const response = await controller.getAsync(request, config) - handles the GET request.
+			 * 5. const response = homePageView.homePage() - render the home page.
+			 * 6. assert.deepEqual(actual, expected) - compare two objects.
 			 *
 			 * Hints:
 			 *
@@ -52,8 +52,8 @@ describe.only("Home Page Controller", () => {
 			 * 5. Use assert.deepEqual() to make the comparison. It checks that the contents of two objects are identical.
 			 *    assert.deepEqual(response, expected);
 			 *
-			 * 6. The test is complete. When you save, it will fail with "unexpected undefined to deep equal HttpResponse..."
-			 * This means getAsync() isn't returning a value.
+			 * 6. When you run the test, it will fail with "unexpected undefined to deep equal HttpResponse..." This means
+			 * getAsync() isn't returning a value.
 			 *
 			 * 7. Make the test pass by having getAsync() return the home page:
 			 *    return homePageView.homePage()
@@ -74,81 +74,157 @@ describe.only("Home Page Controller", () => {
 		});
 
 		it("POST asks ROT-13 service to transform text", async () => {
-			/* CHALLENGE #2: Tracking requests
+			/* CHALLENGE #2a: Tracking requests
 			 *
-			 * This is a lot more challenging! You need to make HomePageController respond to POST requests. When it receives
-			 * the request, it needs to parse the form data and call the ROT-13 service. (You don't need to worry about
-			 * returning the home page for this challenge.)
+			 * This is a lot more challenging! You need to make HomePageController call the ROT-13 service when it
+			 * receives a POST request. To make this easier, the challenge is broken up into three parts.
 			 *
-			 * To make this challenge easier, take it in small steps. Be sure to test-drive each step.
-			 *   a. TCall the ROT-13 service with a hard-coded port and text
-			 *   b. Call the ROT-13 service with the correct port
-			 *   c. Parse the form data and call the ROT-13 service with the correct text
+			 * For part (a), make the HomePageController call the ROT-13 service when it receives a POST request.
+			 * Use a hard-coded port and text. You don't need to worry about the response for this challenge. Don't
+			 * worry about errors or edge cases either.
 			 *
-			 * Don't worry about parsing errors or edge cases for this challenge.
+			 * Useful methods:
+			 *
+			 * 1. const controller = HomePageController.createNull({ rot13Client }) - create a HomePageController that
+			 *      uses the provided rot13Client. Note that createNull() takes an object with an optional field named
+			 *      "rot13Client". Don't forget the curly braces. If you use a different variable name for your rot13Client,
+			 *      you have to specify it, like this: createNull({ rot13Client: myDifferentName });
+			 * 2. const rot13Client = Rot13Client.createNull() - create a Rot13Client.
+			 * 3. const rot13Requests = rot13Client.trackRequests() - track requests made to rot13Client. This returns a
+			 *      reference to an empty array on the heap. Every time a new request is made of rot13Client, an object
+			 *      describing the request is appended to the array. The object looks like this:
+			 *          {
+			 *            port: 123,          // The port of the ROT-13 service
+			 *            text: "some text"   // The text sent to the service
+			 *          }
+			 * 4. const response = await controller.postAsync(request, config) - handles the POST request.
+			 * 5. const transformedText = await rot13Client.transformAsync(port, text) - call the ROT-13 service.
 			 *
 			 * Hints:
 			 *
-			 * PART (a)
-			 *
-			 * 1. Your production code will need to call the ROT-13 service. The way to do so is with Rot13Client, which
-			 * is in "this._rot13Client".
-			 *
-			 * 2. When you called HomePageController.createNull() in the last challenge, it created the Rot13Client for you.
+			 * 1. When you called HomePageController.createNull() in the last challenge, it created the Rot13Client for you.
 			 * But in this challenge, you’ll need access to the Rot13Client instance in your test, so you'll need to create
-			 * it in your test and pass it into HomePageController. The way to do so is with an optional
-			 * parameter: HomePageController.createNull({ rot13Client }).
+			 * it in your test and pass it into HomePageController, like this:
+			 *    const rot13Client = Rot13Client.createNull();
+			 *    const controller = HomePageController.createNull({ rot13Client });
 			 *
-			 * 3. To create Rot13Client, you can call Rot13Client.createNull().
-			 *
-			 * 4. Your test needs to see which requests have been made to the ROT-13 service. You can do that by calling
+			 * 2. Your test needs to see which requests have been made to the ROT-13 service. You can do that by calling
 			 * rot13Client.trackRequests(). It returns an array that is updated every time a new request is made. Note that
-			 * you have to call trackRequests() BEFORE making the request.
+			 * you have to call trackRequests() BEFORE making the request:
+			 *    const rot13Requests = rot13Client.trackRequests();
 			 *
-			 * 5. Compare the results of trackRequests() to your expected requests using assert.deepEqual(). Note that
-			 * trackRequests() will return an array of objects. Each object represents a single request. For example:
-			 *   assert.deepEqual(rot13Requests, [{
-			 *     port: 123,           // The port of the ROT-13 service
-			 *     text: "some text",   // The text sent to the service
-			 *   }]);
+			 * 3. To simulate a POST request, call controller.postAsync(). It expects HttpRequest and WwwConfig parameters,
+			 * just like getAysnc() did in Challenge #1. This time, though, you can ignore the response, because your
+			 * assertion will look at rot13Requests instead.
+			 *    const request = HttpRequest.createNull();
+			 *    const config = WwwConfig.createNull();
+			 *    await controller.postAsync(request, config);
 			 *
-			 * 6. Once you have a simple test written, you can call the ROT-13 service in your production code by calling
-			 * this._rot13Client.transform(port, text). "Port" is the port that the ROT-13 server is running on.
-			 * "Text" is the text you want to transform. Start by hardcoding both of them. You don't need to worry about
-			 * the return value for this challenge.
+			 * 4. Compare the rot13Requests array (from rot13Client.trackRequests()) to your expected requests using
+			 * assert.deepEqual(). It will contain an array of objects. Each object represents a single request. Since
+			 * you're only expecting the production code to make one request, you can expect an array with one object.
+			 * Like this:
+			 *    assert.deepEqual(rot13Requests, [{
+			 *      port: 123,           // The port of the ROT-13 service
+			 *      text: "some text",   // The text sent to the service
+			 *    }]);
 			 *
-			 * PART (b)
+			 * 5. When you run the test, it will fail saying the actual value is "[]" (an empty array. This means your
+			 * production code isn't make any ROT-13 service requests.
 			 *
-			 * 7. Once the test is passing, change it to use the real ROT-13 port. The port is provided by WwwConfig,
-			 * specifically config.rot13ServicePort. Your test will need to set it up by passing the port into
-			 * WwwConfig.createNull(). As with all createNull() factories, it uses an optional parameter. Like this:
-			 *    WwwConfig.createNull({ rot13ServicePort }).
-			 *
-			 * PART (c)
-			 *
-			 * 8. After you get the port working, you'll need to use the real text. That comes from user's input on the web
-			 * page. Specifically, the web browser will send a request body with URL-encoded form data. It will look like
-			 * this: "text=hello%20world".
-			 *
-			 * 9. In your test, you can set up the request body by using--you guessed it--HttpRequest.createNull({ body }).
-			 *
-			 * 10. In your production code, you can read the request body by using "await request.readBodyAsync()".
-			 *
-			 * 11. To parse the form data, use the standard "URLSearchParams" class. It works like this:
-			 *   const formData = new URLSearchParams(requestBody);   // parse the request body
-			 *   const textFields = formData.getAll("text");  // get an array containing the value of all "text" fields
-			 *   const userInput = textFields[0];
+			 * 6. You can call the ROT-13 service in your production code by using this._rot13Client.transformAsync().
+			 * You can hardcode the port and text for this challenge, and you don't need to worry about the return value.
+			 * Like this:
+			 *    await this._rot13Client.transformAsync(123, "some text");
 			 *
 			 */
 
 			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
 			// don't forget to pass Rot13Client into HomePageController
+			const rot13Client = Rot13Client.createNull();
+			const controller = HomePageController.createNull({ rot13Client });
+			const rot13Requests = rot13Client.trackRequests();
+			const request = HttpRequest.createNull();
+			const config = WwwConfig.createNull();
 
 			// Act: call controller.postAsync() -- don't forget to await
+			await controller.postAsync(request, config);
 
 			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
 			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
+			assert.deepEqual(rot13Requests, [{
+				port: 123,           // The port of the ROT-13 service
+				text: "some text",   // The text sent to the service
+			}]);
 		});
+
+		/*
+		 *
+		 *
+		 *   a. Call the ROT-13 service with a hard-coded port and text
+		 *   b. Call the ROT-13 service with the correct port
+		 *   c. Parse the form data and call the ROT-13 service with the correct text
+
+		 * the request, it needs to parse the form data and call the ROT-13 service. (You don't need to worry about
+		 * returning the home page for this challenge.)
+		 *
+		 * To make this challenge easier, take it in small steps. Be sure to test-drive each step.
+		 *
+		 * Don't worry about parsing errors or edge cases for this challenge.
+		 *
+		 * Hints:
+		 *
+		 * PART (a)
+		 *
+		 * 1. Your production code will need to call the ROT-13 service. The way to do so is with Rot13Client, which
+		 * is in "this._rot13Client".
+		 *
+		 * 2. When you called HomePageController.createNull() in the last challenge, it created the Rot13Client for you.
+		 * But in this challenge, you’ll need access to the Rot13Client instance in your test, so you'll need to create
+		 * it in your test and pass it into HomePageController. The way to do so is with an optional
+		 * parameter: HomePageController.createNull({ rot13Client }).
+		 *
+		 * 3. To create Rot13Client, you can call Rot13Client.createNull().
+		 *
+		 * 4. Your test needs to see which requests have been made to the ROT-13 service. You can do that by calling
+		 * rot13Client.trackRequests(). It returns an array that is updated every time a new request is made. Note that
+		 * you have to call trackRequests() BEFORE making the request.
+		 *
+		 * 5. Compare the results of trackRequests() to your expected requests using assert.deepEqual(). Note that
+		 * trackRequests() will return an array of objects. Each object represents a single request. For example:
+		 *   assert.deepEqual(rot13Requests, [{
+		 *     port: 123,           // The port of the ROT-13 service
+		 *     text: "some text",   // The text sent to the service
+		 *   }]);
+		 *
+		 * 6. Once you have a simple test written, you can call the ROT-13 service in your production code by calling
+		 * this._rot13Client.transform(port, text). "Port" is the port that the ROT-13 server is running on.
+		 * "Text" is the text you want to transform. Start by hardcoding both of them. You don't need to worry about
+		 * the return value for this challenge.
+		 *
+		 * PART (b)
+		 *
+		 * 7. Once the test is passing, change it to use the real ROT-13 port. The port is provided by WwwConfig,
+		 * specifically config.rot13ServicePort. Your test will need to set it up by passing the port into
+		 * WwwConfig.createNull(). As with all createNull() factories, it uses an optional parameter. Like this:
+		 *    WwwConfig.createNull({ rot13ServicePort }).
+		 *
+		 * PART (c)
+		 *
+		 * 8. After you get the port working, you'll need to use the real text. That comes from user's input on the web
+		 * page. Specifically, the web browser will send a request body with URL-encoded form data. It will look like
+		 * this: "text=hello%20world".
+		 *
+		 * 9. In your test, you can set up the request body by using--you guessed it--HttpRequest.createNull({ body }).
+		 *
+		 * 10. In your production code, you can read the request body by using "await request.readBodyAsync()".
+		 *
+		 * 11. To parse the form data, use the standard "URLSearchParams" class. It works like this:
+		 *   const formData = new URLSearchParams(requestBody);   // parse the request body
+		 *   const textFields = formData.getAll("text");  // get an array containing the value of all "text" fields
+		 *   const userInput = textFields[0];
+		 *
+		 */
 
 		it("POST renders result of ROT-13 service call", async() => {
 			/* CHALLENGE #3: Configuring responses
