@@ -49,9 +49,20 @@ module.exports = class HomePageController {
 		const body = await request.readBodyAsync();
 		const formData = new URLSearchParams(body);
 		const textFields = formData.getAll("text");
+		if (textFields.length === 0) {
+			config.log.monitor({
+				message: "form parse error in POST /",
+				details: "'text' form field not found",
+				body,
+			});
+			return homePageView.homePage();
+		}
+
 		const userInput = textFields[0];
 
-		await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
+		const output = await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
+
+		return homePageView.homePage(output);
 	}
 
 };
