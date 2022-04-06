@@ -141,11 +141,12 @@ describe.only("Home Page Controller", () => {
 
 			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
 			// don't forget to pass Rot13Client into HomePageController
+			const body = "text=hello%20world";
 			const rot13Client = Rot13Client.createNull();
 			const controller = HomePageController.createNull({ rot13Client });
 			const rot13Requests = rot13Client.trackRequests();
-			const request = HttpRequest.createNull();
-			const config = WwwConfig.createNull();
+			const request = HttpRequest.createNull({ body });
+			const config = WwwConfig.createNull({ rot13ServicePort: 999 });
 
 			// Act: call controller.postAsync() -- don't forget to await
 			await controller.postAsync(request, config);
@@ -153,76 +154,88 @@ describe.only("Home Page Controller", () => {
 			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
 			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
 			assert.deepEqual(rot13Requests, [{
-				port: 123,           // The port of the ROT-13 service
-				text: "some text",   // The text sent to the service
+				port: 999,           // The port of the ROT-13 service
+				text: "hello world",   // The text sent to the service
 			}]);
 		});
 
-		/*
+		/* CHALLENGE #2b: Dynamic port
 		 *
+		 * For this challenge, modify the test and production code created in Challenge #2a. Change it to use the
+		 * ROT-13 service port provided in WwwConfig rather than hard-coding the value.
 		 *
-		 *   a. Call the ROT-13 service with a hard-coded port and text
-		 *   b. Call the ROT-13 service with the correct port
-		 *   c. Parse the form data and call the ROT-13 service with the correct text
-
-		 * the request, it needs to parse the form data and call the ROT-13 service. (You don't need to worry about
-		 * returning the home page for this challenge.)
+		 * Useful methods:
 		 *
-		 * To make this challenge easier, take it in small steps. Be sure to test-drive each step.
-		 *
-		 * Don't worry about parsing errors or edge cases for this challenge.
+		 * 1. const config = WwwConfig.createNull({ rot13ServicePort }) - create a WwwConfig with the provided ROT-13
+		 *      service port. Note that createNull() takes an object with an optional field named "rot13ServicePort".
+		 * 2. const port = config.rot13ServicePort - get the ROT-13 service port.
 		 *
 		 * Hints:
 		 *
-		 * PART (a)
+		 * 1. Your production code will get the port from WwwConfig, so you'll need to update the "config" line of
+		 * your test to provide the port. Use a different port to prove that your test is working:
+		 *    const config = WwwConfig.createNull({ rot13ServicePort: 999 });
 		 *
-		 * 1. Your production code will need to call the ROT-13 service. The way to do so is with Rot13Client, which
-		 * is in "this._rot13Client".
+		 * 2. Remember to update your assertion to use the new port:
+		 *    assert.deepEqual(rot13Requests, [{
+		 *      port: 999,           // The port of the ROT-13 service
+		 *      text: "some text",   // The text sent to the service
+		 *    }]);
 		 *
-		 * 2. When you called HomePageController.createNull() in the last challenge, it created the Rot13Client for you.
-		 * But in this challenge, you’ll need access to the Rot13Client instance in your test, so you'll need to create
-		 * it in your test and pass it into HomePageController. The way to do so is with an optional
-		 * parameter: HomePageController.createNull({ rot13Client }).
+		 * 3. When you run the test, it will fail because it expected port 999, but got port 123. This means your
+		 * production code isn't using the port defined in the config.
 		 *
-		 * 3. To create Rot13Client, you can call Rot13Client.createNull().
+		 * 4. Change your production code to get the port out of the config object. Like this:
+		 *    await this._rot13Client.transformAsync(config.rot13ServicePort, "some text");
 		 *
-		 * 4. Your test needs to see which requests have been made to the ROT-13 service. You can do that by calling
-		 * rot13Client.trackRequests(). It returns an array that is updated every time a new request is made. Note that
-		 * you have to call trackRequests() BEFORE making the request.
+		 */
+
+		/* CHALLENGE #2c: Parsing text
 		 *
-		 * 5. Compare the results of trackRequests() to your expected requests using assert.deepEqual(). Note that
-		 * trackRequests() will return an array of objects. Each object represents a single request. For example:
-		 *   assert.deepEqual(rot13Requests, [{
-		 *     port: 123,           // The port of the ROT-13 service
-		 *     text: "some text",   // The text sent to the service
-		 *   }]);
+		 * Modify the test and production code created in Challenge #2a again. This time, change it to parse the request
+		 * body rather than hard-coding the text. Use this request body:
 		 *
-		 * 6. Once you have a simple test written, you can call the ROT-13 service in your production code by calling
-		 * this._rot13Client.transform(port, text). "Port" is the port that the ROT-13 server is running on.
-		 * "Text" is the text you want to transform. Start by hardcoding both of them. You don't need to worry about
-		 * the return value for this challenge.
+		 *    const body = "text=hello%20world";
 		 *
-		 * PART (b)
+		 * This is URL-encoded form data that matches what a browser will send. Given this body, the controller should
+		 * parse out the "text" field and send "hello world" to the ROT-13 service.
 		 *
-		 * 7. Once the test is passing, change it to use the real ROT-13 port. The port is provided by WwwConfig,
-		 * specifically config.rot13ServicePort. Your test will need to set it up by passing the port into
-		 * WwwConfig.createNull(). As with all createNull() factories, it uses an optional parameter. Like this:
-		 *    WwwConfig.createNull({ rot13ServicePort }).
+		 * Useful methods:
 		 *
-		 * PART (c)
+		 * 1. const request = HttpRequest.createNull({ body }) - create a request with the provided body. (To inline the
+		 *      body, use "HttpRequest.createNull({ body: "text=hello%20world" })".)
+		 * 2. const body = await request.readBodyAsync() - read the request body.
+		 * 3. const formData = new URLSearchParams(body) - parse the request body. (URLSearchParams is part of the
+		 *      standard library.)
+		 * 4. const textFields = formData.getAll("text") - get an array containing the values of all "text" fields. It
+		 *      will be empty if there are no "text" fields.
 		 *
-		 * 8. After you get the port working, you'll need to use the real text. That comes from user's input on the web
-		 * page. Specifically, the web browser will send a request body with URL-encoded form data. It will look like
-		 * this: "text=hello%20world".
+		 * Hints:
 		 *
-		 * 9. In your test, you can set up the request body by using--you guessed it--HttpRequest.createNull({ body }).
+		 * 1. Your production code will read the request body from HttpRequest, so you need to update the "request" line
+		 * of your test to provide the body. Like this:
+		 *    const body = "text=hello%20world";
+		 *    const request = HttpRequest.createNull({ body });
 		 *
-		 * 10. In your production code, you can read the request body by using "await request.readBodyAsync()".
+		 * 2. Update your assertion to use the new text field:
+		 *    assert.deepEqual(rot13Requests, [{
+		 *      port: 999,           // The port of the ROT-13 service
+		 *      text: "hello world", // The text sent to the service
+		 *    }]);
 		 *
-		 * 11. To parse the form data, use the standard "URLSearchParams" class. It works like this:
-		 *   const formData = new URLSearchParams(requestBody);   // parse the request body
-		 *   const textFields = formData.getAll("text");  // get an array containing the value of all "text" fields
-		 *   const userInput = textFields[0];
+		 * 3. When you run the test, it will fail because it expected "hello world," but got "some text". This means
+		 * your production code isn't reading the request body.
+		 *
+		 * 4. Change your production code to read the request body:
+		 *    const body = await request.readBodyAsync();
+		 *
+		 * 5. Parse the request body:
+		 *    const formData = new URLSearchParams(requestBody);
+		 *    const textFields = formData.getAll("text");
+		 *    const userInput = textFields[0];
+		 *
+		 * 6. Modify the ROT-13 request to use the request body:
+		 *    await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
 		 *
 		 */
 
