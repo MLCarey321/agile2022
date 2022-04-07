@@ -40,8 +40,8 @@ describe.only("Home Page Controller", () => {
 			 * end in "Async".
 			 *
 			 * 2. async:
-			 * If your function uses the "await" keyword, it has to be marked "async". If you don't, the linter will give
-			 * you an "unexpected token" error on the line that has the "await" keyword. You can do mark a function "async"
+			 * If your function uses the "await" keyword, it has to be marked "async". If it isn't, the linter will give
+			 * you an "unexpected token" error on the line that has the "await" keyword. You can mark a function "async"
 			 * by putting the keyword "async" in front of the function declaration. It's a good idea to give the function
 			 * a name that ends in "Async", too. Like this:
 			 *    async function myFunctionAsync() {...}  // function
@@ -125,7 +125,7 @@ describe.only("Home Page Controller", () => {
 			 * to have certain fields. Often, those fields are optional. If no value is provided, the function will fill
 			 * in a default. In fact, the whole parameter can be optional. That's how HomePageController.createNull() works.
 			 * If you don't provide an object with a "rot13Client" field, createNull() will fill one in for you. You can
-			 * see how this works on in the declaration of createNull() in home_page_controller.js (around lines 19-22).
+			 * see how this works in the declaration of createNull() in home_page_controller.js (around lines 19-22).
 			 *
 			 * Hints:
 			 *
@@ -157,7 +157,7 @@ describe.only("Home Page Controller", () => {
 			 *    }]);
 			 *
 			 * 5. When you run the test, it will fail saying the actual value is "[]" (an empty array). This means your
-			 * production code isn't make any ROT-13 service requests.
+			 * production code isn't making any ROT-13 service requests.
 			 *
 			 * 6. You can call the ROT-13 service in your production code by using this._rot13Client.transformAsync().
 			 * You can hardcode the port and text for this challenge, and you don't need to worry about the return value.
