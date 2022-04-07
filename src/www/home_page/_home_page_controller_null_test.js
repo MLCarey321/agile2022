@@ -30,6 +30,24 @@ describe.only("Home Page Controller", () => {
 			 * 5. const response = homePageView.homePage() - render the home page.
 			 * 6. assert.deepEqual(actual, expected) - compare two objects.
 			 *
+			 * JavaScript syntax notes:
+			 *
+			 * 1. await:
+			 * Some JavaScript functions and methods are "async", which means they return a Promise object. Functions that
+			 * return promises usually execute some of their code asynchronously, in the background. They're not done until
+			 * the promise resolves. To make your code wait for a promise to resolve, use the "await" keyword. In this
+			 * example codebase, it's almost always best to "await" functions that are async. They all have names that
+			 * end in "Async".
+			 *
+			 * 2. async:
+			 * If your function uses the "await" keyword, it has to be marked "async". If you don't, the linter will give
+			 * you an "unexpected token" error on the line that has the "await" keyword. You can do mark a function "async"
+			 * by putting the keyword "async" in front of the function declaration. It's a good idea to give the function
+			 * a name that ends in "Async", too. Like this:
+			 *    async function myFunctionAsync() {...}  // function
+			 *    async myMethodAsync() {...}  // method
+			 *    async () => {...}  // anonymous function
+			 *
 			 * Hints:
 			 *
 			 * 1. Your test will need a HomePageController. You can construct it with HomePageController.createNull():
@@ -93,6 +111,21 @@ describe.only("Home Page Controller", () => {
 			 *          }
 			 * 4. const response = await controller.postAsync(request, config) - handles the POST request.
 			 * 5. const transformedText = await rot13Client.transformAsync(port, text) - call the ROT-13 service.
+			 *
+			 * JavaScript syntax notes:
+			 *
+			 * 1. Object shorthand:
+			 * JavaScript objects, such as "{ rot13Client: myClient }" consist of multiple fields, each separated by a comma.
+			 * Each field consists of a name ("rot13Client") and a value (the "myClient" variable). However, if the name of
+			 * the variable is the same as the name of the field, you can eliminate it. So if you have a field named
+			 * "rot13Client" with a variable named "rot13Client", you can just say "{ rot13Client }".
+			 *
+			 * 2. Optional fields and parameters:
+			 * It's common for JavaScript functions to take an object as a parameter. The function will expect the object
+			 * to have certain fields. Often, those fields are optional. If no value is provided, the function will fill
+			 * in a default. In fact, the whole parameter can be optional. That's how HomePageController.createNull() works.
+			 * If you don't provide an object with a "rot13Client" field, createNull() will fill one in for you. You can
+			 * see how this works on in the declaration of createNull() in home_page_controller.js (around lines 19-22).
 			 *
 			 * Hints:
 			 *
@@ -416,6 +449,23 @@ describe.only("Home Page Controller", () => {
 			 * Before writing this test, look at your existing tests. There's probably a lot of duplication. Think about
 			 * how to refactor it to eliminate the duplication. Then, after the test is working, look at your production
 			 * code and find ways to clean it up.
+			 *
+			 * JavaScript syntax notes:
+			 *
+			 * 1. Object destructuring
+			 * When an object is passed into a JavaScript function, or returned from a function, it can be "destructured."
+			 * That means the fields in the object are automatically converted to variables. This is done by using object
+			 * syntax (such as "{ body }") in place of a variable name. For example, the
+			 * following code will print "foo" and then "bar":
+			 *    function myFunction({ body }) {
+			 *      console.log(body);              // prints "foo"
+			 *      return { result: "bar" };
+			 *    }
+			 *    const { result } = myFunction({ body: foo });
+			 *    console.log(result);              // prints "bar"
+			 *
+			 * 2. "Unexpected token" error in lint
+			 * This error occurs when you forget to put the "async" keyword on a function that uses the "await" keyword.
 			 *
 			 * Hints:
 			 *
