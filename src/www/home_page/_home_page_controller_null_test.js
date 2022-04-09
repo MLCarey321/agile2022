@@ -26,22 +26,23 @@ describe.only("Home Page Controller", () => {
 			 * 1. const controller = HomePageController.createNull() - create a HomePageController.
 			 * 2. const request = HttpRequest.createNull() - create an HttpRequest.
 			 * 3. const config = WwwConfig.createNull() - create a WwwConfig.
-			 * 4. const response = await controller.getAsync(request, config) - handles the GET request.
+			 * 4. const response = await controller.getAsync(request, config) - handle the GET request.
 			 * 5. const response = homePageView.homePage() - render the home page.
 			 * 6. assert.deepEqual(actual, expected) - compare two objects.
 			 *
 			 * JavaScript syntax notes:
 			 *
 			 * 1. await:
-			 * Some JavaScript functions and methods are "async", which means they return a Promise object. Functions that
-			 * return promises usually execute some of their code asynchronously, in the background. They're not done until
-			 * the promise resolves. To make your code wait for a promise to resolve, use the "await" keyword. In this
-			 * example codebase, it's almost always best to "await" functions that are async. They all have names that
-			 * end in "Async".
+			 * Some JavaScript functions and methods are "async", which means they wrap their return value in a Promise
+			 * object. Functions that return promises usually execute some of their code asynchronously, in the background.
+			 * They're not done until the promise resolves. To make your code wait for a promise to resolve (and also
+			 * unwrap the underlying value), use the "await" keyword. In this example codebase, it's almost always best
+			 * to "await" functions that are async. They all have names that end in "Async".
 			 *
 			 * 2. async:
-			 * If your function uses the "await" keyword, it has to be marked "async". If it isn't, the linter will give
-			 * you an "unexpected token" error on the line that has the "await" keyword. You can mark a function "async"
+			 * If your function uses the "await" keyword, it has to be marked "async". I've done this for you in most
+			 * cases. If you make a new function that uses "await", and forget to make it async, the linter will give
+			 * you an "unexpected token" error on the line that has the "await" keyword. You can make a function async
 			 * by putting the keyword "async" in front of the function declaration. It's a good idea to give the function
 			 * a name that ends in "Async", too. Like this:
 			 *    async function myFunctionAsync() {...}  // function
@@ -109,7 +110,7 @@ describe.only("Home Page Controller", () => {
 			 *            port: 123,          // The port of the ROT-13 service
 			 *            text: "some text"   // The text sent to the service
 			 *          }
-			 * 4. const response = await controller.postAsync(request, config) - handles the POST request.
+			 * 4. const response = await controller.postAsync(request, config) - handle the POST request.
 			 * 5. const transformedText = await rot13Client.transformAsync(port, text) - call the ROT-13 service.
 			 *
 			 * JavaScript syntax notes:
@@ -206,7 +207,7 @@ describe.only("Home Page Controller", () => {
 		 *
 		 */
 
-		/* CHALLENGE #2c: Parsing text
+		/* CHALLENGE #2c: Parsing the request body
 		 *
 		 * Modify the test and production code created in Challenge #2a again. This time, change it to parse the request
 		 * body rather than hard-coding the text. Use this request body:
@@ -259,7 +260,7 @@ describe.only("Home Page Controller", () => {
 		it("POST renders result of ROT-13 service call", async() => {
 			/* CHALLENGE #3: Configuring responses
 			 *
-			 * In the last challenge, you made the code call the ROT-13 server. In this challenge, you need to make it
+			 * In the previous challenge, you made the code call the ROT-13 server. In this challenge, you need to make it
 			 * return the correct home page response. Specifically, the controller should return a web page with the
 			 * translated ROT-13 string in the text field.
 			 *
