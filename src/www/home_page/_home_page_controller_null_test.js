@@ -103,9 +103,9 @@ describe.only("Home Page Controller", () => {
 			 *      "rot13Client". Don't forget the curly braces. If you use a different variable name for your rot13Client,
 			 *      you have to specify it, like this: createNull({ rot13Client: myDifferentName });
 			 * 2. const rot13Client = Rot13Client.createNull() - create a Rot13Client.
-			 * 3. const rot13Requests = rot13Client.trackRequests() - track requests made to rot13Client. This returns a
-			 *      reference to an empty array on the heap. Every time a new request is made of rot13Client, an object
-			 *      describing the request is appended to the array. The object looks like this:
+			 * 3. const rot13Requests = rot13Client.trackRequests() - track requests made by rot13Client. This returns a
+			 *      reference to an empty array on the heap. Every time rot13Client makes a request to the ROT-13 service,
+			 *      an object describing the request is appended to the array. The object looks like this:
 			 *          {
 			 *            port: 123,          // The port of the ROT-13 service
 			 *            text: "some text"   // The text sent to the service
@@ -294,9 +294,9 @@ describe.only("Home Page Controller", () => {
 			 *      const controller = HomePageController.createNull({ rot13Client });
 			 *      const config = WwwConfig.createNull();
 			 *
-			 * 4. You'll need to call postAsync() and check that it returns the correct response. This is just like
-			 * challenge #1, except you need to render the expected ROT-13 response into the page. You can do that by
-			 * passing it into homePageView.homePage():
+			 * 4. Call postAsync() and check that it returns the correct response. This is just like challenge #1, except
+			 * you need to render the expected ROT-13 response into the page. You can do that by passing the expected
+			 * response into homePageView.homePage():
 			 *      const response = await controller.postAsync(request, config);
 			 *      const expected = homePageView.homePage("my_response");
 			 *      assert.deepEqual(response, expected);
@@ -321,7 +321,7 @@ describe.only("Home Page Controller", () => {
 			// Rot13Client into HomePageController
 
 			// Act: call controller.postAsync() -- don't forget to await
-			// If you get an error from rot13Client.transform, make sure you're setting up the request body correctly
+			// If you get an error from rot13Client.transformAsync, make sure you're setting up the request body correctly
 
 			// Assert: check that the result of postAsync() matches homePageView.homePage(expectedText)
 		});
@@ -384,8 +384,8 @@ describe.only("Home Page Controller", () => {
 			 *      to the array. The object has the log's alert level (in the "alert" field) and any other fields that
 			 *      are written in that log entry. Fields containing Error objects are converted to strings.
 			 * 4. const log = config.log - get the logger.
-			 * 5. log.monitor(data) - write data to the log with the "monitor" alert level. "data" must be an object, but
-			 *     it may contain any fields containing any values.
+			 * 5. log.monitor(data) - write data to the log with the "monitor" alert level. "data" must be an object, and
+			 *     that object may contain any fields you like.
 			 *
 			 * Hints:
 			 *
@@ -458,14 +458,14 @@ describe.only("Home Page Controller", () => {
 			 * That means the fields in the object are automatically converted to variables. This is done by using object
 			 * syntax (such as "{ body }") in place of a variable name. For example, the
 			 * following code will print "foo" and then "bar":
+			 *    const { result } = myFunction({ body: "foo" });
 			 *    function myFunction({ body }) {
 			 *      console.log(body);              // prints "foo"
 			 *      return { result: "bar" };
 			 *    }
-			 *    const { result } = myFunction({ body: foo });
 			 *    console.log(result);              // prints "bar"
 			 *
-			 * 2. "Unexpected token" error in lint
+			 * 2. "Unexpected token" lint error
 			 * This error occurs when you forget to put the "async" keyword on a function that uses the "await" keyword.
 			 *
 			 * Hints:
