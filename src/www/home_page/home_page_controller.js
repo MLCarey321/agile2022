@@ -68,10 +68,23 @@ module.exports = class HomePageController {
 			return homePageView.homePage();
 		}
 
+		const TIMEOUT_IN_MS = 5000;
+
 		const userInput = textFields[0];
 		try {
-			const { transformPromise } = this._rot13Client.transform(config.rot13ServicePort, userInput);
-			const output = await transformPromise;
+			const { transformPromise, cancelFn } = this._rot13Client.transform(config.rot13ServicePort, userInput);
+			const output = await this._clock.timeoutAsync(
+				TIMEOUT_IN_MS,
+				transformPromise,
+				() => {
+					config.log.emergency({
+						message: "ROT-13 service timed out in POST /",
+						timeoutInMs: TIMEOUT_IN_MS,
+					});
+					cancelFn();
+					return "ROT-13 service timed out";
+				}
+			);
 			return homePageView.homePage(output);
 		}
 		catch(error) {

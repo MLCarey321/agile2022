@@ -864,13 +864,11 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * Useful methods:
 			 *
-			 * 1. const rot13Client = Rot13Client.createNull([{ hang: "true" }])
-			 *      Create a Rot13Client that never returns the first time it's called. Note that the parameter is
-			 *      an array of objects. (If you wanted to control additional responses, you would add more objects
-			 *      to the array.)
+			 * 1. new Promise(() => {})
+			 *      Create a promise that hangs (never resolves).
 			 *
 			 * 2. const clock = Clock.createNull()
-			 *      Create a Clock instance that can be advanced programmatically.
+			 *      Create a fake clock that can be advanced programmatically.
 			 *
 			 * 3. await clock.advanceNullTimersAsync()
 			 *      Advance the clock until all timers expire.
@@ -881,32 +879,27 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * 5. const { transformPromise, cancelFn } = rot13Client.transform(port, text)
 			 *      The transformPromise field was described in the notes for the previous challenge. The cancelFn
-			 *      field contains a function that will cancel the request. When a request is cancelled, the
-			 *      cancellation appears in the rot13Client.trackRequests() array like this:
-			 *          {
-			 *            port: 999,
-			 *            text: "my_input",
-			 *            cancelled: true,
-			 *          }
+			 *      field contains a function that will cancel the request.
+			 *
+			 * 6. const mockFn = td.function()
+			 *      Create a mock function.
 			 *
 			 *
 			 * Hints:
 			 *
-			 * 1. You'll need the ability to call postAsync() without awaiting it. Start by renaming simulatePostAsync()
+			 * 1. You'll need the ability to call postAsync() without awaiting it. Start by copying simulatePostAsync()
 			 * to simulatePost() and modifying it to not await the result of postAsync(). Like this:
 			 *      function simulatePost({
 			 *        ...
 			 *        const responsePromise = controller.postAsync(request, config);
-			 *
 			 *        return {
 			 *          responsePromise,
-			 *          rot13Requests,
-			 *          logOutput,
+			 *          rot13Client,
+			 *          log,
 			 *        };
-			 *      }
 			 *
-			 * 2. Next, create a new simulatePostAsync() that calls simulatePost():
-			 *      function simulatePostAsync(options) {
+			 * 2. Next, modify simulatePostAsync() to call simulatePost():
+			 *      async function simulatePostAsync(options) {
 			 *        const { responsePromise, ...remainder } = simulatePost(options);
 			 *        return {
 			 *          response: await responsePromise,
@@ -916,33 +909,60 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * 3. If you refactored correctly, all your tests should still pass.
 			 *
-			 * 4. You'll need the ability to control the clock. Modify simulatePost() to create a null Clock and provide
-			 * it to HomePageController, then return the clock to callers:
+			 * 4. You'll need the ability to control the clock. Modify simulatePost() so that, rather than creating
+			 * a mock instance of Clock, it creates a null Clock. Replace:
+			 *      const clock = td.instance(Clock);
+			 * with:
 			 *      const clock = Clock.createNull();
-			 *      const controller = HomePageController.createNull({ rot13Client, clock });
-			 *      ...
+			 * and return the clock:
 			 *      return {
 			 *        responsePromise,
-			 *        rot13Requests,
-			 *        logOutput,
+			 *        rot13Client,
+			 *        log,
 			 *        clock,
 			 *      };
 			 *
-			 * 5. In the test itself, you'll need to cause the Rot13Client to hang. You can do that with the 'hang' field:
-			 *      const rot13Client = Rot13Client.createNull([{ hang: true ]});
+			 * 5. You'll also need the simulatePost() to support causing a hang. In the function declaration, add
+			 * a parameter for hanging, like this:
+			 * function declaration, add a parameter for the error, like this:
+			 *      function simulatePost({
+			 *        body = `text=${IRRELEVANT_INPUT}`,
+			 *        rot13Port = IRRELEVANT_PORT,
+			 *        rot13Input = IRRELEVANT_INPUT,
+			 *        rot13Response = "irrelevant ROT-13 response",
+			 *        rot13Error,
+			 *        rot13Hang = false,
+			 *      } = {}) {
 			 *
-			 * 6. Then you'll can use your helper method to call postAsync(). You'll need all of the variables it creates:
-			 *      const { responsePromise, rot13Requests, logOutput, clock } = simulatePost({
-			 *        rot13Client,
+			 * 6. Next, modify the body of simulatePost() to hang if rot13Hang is set. Like this:
+			 *      if (rot13Error !== undefined) {
+			 *        td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+			 *          transformPromise: Promise.reject(rot13Error),
+			 *        });
+			 *      }
+			 *      else if (rot13Hang) {
+			 *        td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+			 *          transformPromise: new Promise(() => {}),
+			 *        });
+			 *      }
+			 *      else {
+			 *        td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+			 *          transformPromise: Promise.resolve(rot13Response),
+			 *        });
+			 *      }
+			 *
+			 * 7. Now you can write the test. Start by calling simulatePost():
+			 *      const { responsePromise, clock, log } = simulatePost({
+			 *        rot13Hang: true,
 			 *      });
 			 *
-			 * 7. Now advance the clock so all timeouts expire and wait for the results of postAsync():
+			 * 8. Now advance the clock so all timeouts expire and wait for the results of postAsync():
 			 *      await clock.advanceNullTimersAsync();
 			 *      const response = await responsePromise;
 			 *
-			 * 8. When you run the test, they will fail with a timeout. That's because your production code is hanging.
-			 * In your production code, use clock.timeoutAsync to implement a timeout:
-			 *      const { transformPromise } = rot13Client.transform(config.rot13ServicePort, input);
+			 * 9. If you implemented the rot13Hang code correctly, the test will fail with a timeout. That's because
+			 * your production code is hanging. In your production code, use clock.timeoutAsync() to implement a timeout:
+			 *      const { transformPromise } = this._rot13Client.transform(config.rot13ServicePort, userInput);
 			 *      const output = await this._clock.timeoutAsync(
 			 *        TIMEOUT_IN_MS,      // set this constant to 5000
 			 *        transformPromise,
@@ -950,10 +970,10 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *      );
 			 *      return homePageView.homePage(output);
 			 *
-			 * 9. Now your tests should pass. Next, you can add an assertion for the postAsync() response:
-			 *      assert.deepEqual(response, homePageView.homePage("ROT-13 service timed out");
+			 * 10. Now your tests should pass. Next, you can add an assertion for the postAsync() response:
+			 *      assert.deepEqual(response, homePageView.homePage("ROT-13 service timed out"));
 			 *
-			 * 10. The assertion will fail because the timeout function isn't providing a timeout value. Update it to do so:
+			 * 11. The assertion will fail because the timeout function isn't providing a timeout value. Update it to do so:
 			 *      const output = await this._clock.timeoutAsync(
 			 *        TIMEOUT_IN_MS,
 			 *        transformPromise,
@@ -962,19 +982,18 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *        }
 			 *      );
 			 *
-			 * 11. Now you can assert that the log is written:
-			 *      assert.deepEqual(logOutput, [{
-			 *        alert: "emergency",
+			 * 12. Now you can assert that the log is written:
+			 *      td.verify(log.emergency({
 			 *        message: "ROT-13 service timed out in POST /",
 			 *        timeoutInMs: 5000,
-			 *      };
+			 *      }));
 			 *
-			 * 12. That assertion will fail because your timeout function isn't writing to the log. Add the logging:
+			 * 13. That assertion will fail because your timeout function isn't writing to the log. Add the logging:
 			 *      const output = await this._clock.timeoutAsync(
 			 *        TIMEOUT_IN_MS,
 			 *        transformPromise,
 			 *        () => {
-			 *          log.emergency({
+			 *          config.log.emergency({
 			 *            message: "ROT-13 service timed out in POST /",
 			 *            timeoutInMs: TIMEOUT_IN_MS,
 			 *          });
@@ -982,25 +1001,54 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *        }
 			 *      );
 			 *
-			 * 13. Finally, assert that the request is cancelled:
-			 *      assert.deepEqual(rot13Requests, [{
-			 *        port: IRRELEVANT_PORT,
-			 *        text: IRRELEVANT_INPUT,
-			 *      }, {
-			 *        cancelled: true,
-			 *        port: IRRELEVANT_PORT,
-			 *        text: IRRELEVANT_INPUT,
-			 *      }]);
+			 * 14. Now you can implement the request cancellation. First, you'll need to modify simulatePost() to
+			 * support it. Start by creating a mock function called cancelFn:
+			 *      const cancelFn = td.function();
 			 *
-			 * 14. The assertion will fail because the ROT-13 service call isn't being cancelled. You can cancel
-			 * it by using the "cancelFn" field provided by rot13Client.transform(). First, get the variable, then
-			 * call it in your timeout code:
-			 *      const { transformPromise, cancelFn } = rot13Client.transform(config.rot13ServicePort, input);
+			 * 15. Then, in the code that sets up the responses for rot13Client.transform(), return cancelFn:
+			 *      if (rot13Error !== undefined) {
+			 *        td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+			 *          transformPromise: Promise.reject(rot13Error),
+			 *          cancelFn,
+			 *        });
+			 *      }
+			 *      else if (rot13Hang) {
+			 *        td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+			 *          transformPromise: new Promise(() => {}),
+			 *          cancelFn,
+			 *        });
+			 *      }
+			 *      else {
+			 *        td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+			 *          transformPromise: Promise.resolve(rot13Response),
+			 *          cancelFn,
+			 *        });
+			 *      }
+			 *
+			 * 16. Then return the mock cancelFn:
+			 *      return {
+			 *        responsePromise,
+			 *        rot13Client,
+			 *        log,
+			 *        clock,
+			 *        cancelFn,
+			 *      };
+			 *
+			 * 17. That will allow you to make an assertion on it in your test:
+			 *      const { responsePromise, clock, log, cancelFn } = simulatePost({
+			 *        rot13Hang: true,
+			 *      });
+			 *      ...
+			 *      td.verify(cancelFn());
+			 *
+			 * 18. The test will fail because cancelFn() isn't being called. In your production code, get the variable,
+			 * then call it in your timeout code:
+			 *      const { transformPromise, cancelFn } = this._rot13Client.transform(config.rot13ServicePort, userInput);
 			 *      const output = await this._clock.timeoutAsync(
 			 *        TIMEOUT_IN_MS,
 			 *        transformPromise,
 			 *        () => {
-			 *          log.emergency({
+			 *          config.log.emergency({
 			 *            message: "ROT-13 service timed out in POST /",
 			 *            timeoutInMs: TIMEOUT_IN_MS,
 			 *          });
@@ -1010,9 +1058,24 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *      );
 			 *      return homePageView.homePage(output);
 			 *
-			 * 15. After everything is working, be sure to look for opportunities to refactor the tests and production code.
+			 * 19. After everything is working, be sure to look for opportunities to refactor the tests and production code.
 			 *
 			 */
+			const { responsePromise, clock, log, cancelFn } = simulatePost({
+				rot13Hang: true,
+			});
+			await clock.advanceNullTimersAsync();
+			const response = await responsePromise;
+
+			assert.deepEqual(response, homePageView.homePage("ROT-13 service timed out"));
+			td.verify(log.emergency({
+				message: "ROT-13 service timed out in POST /",
+				timeoutInMs: 5000,
+			}));
+			td.verify(cancelFn());
+
+
+
 
 			// Your test here.
 		});
@@ -1022,18 +1085,28 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 });
 
 
-async function simulatePostAsync({
+async function simulatePostAsync(options) {
+	const { responsePromise, ...remainder } = simulatePost(options);
+	return {
+		response: await responsePromise,
+		...remainder
+	};
+}
+
+function simulatePost({
 	body = `text=${IRRELEVANT_INPUT}`,
 	rot13Port = IRRELEVANT_PORT,
 	rot13Input = IRRELEVANT_INPUT,
 	rot13Response = "irrelevant ROT-13 response",
 	rot13Error,
+	rot13Hang = false,
 } = {}) {
 	const rot13Client = td.instance(Rot13Client);
-	const clock = td.instance(Clock);
+	const clock = Clock.createNull();
 	const request = td.instance(HttpRequest);
 	const config = td.instance(WwwConfig);
 	const log = td.object(new Log());
+	const cancelFn = td.function();
 	const controller = new HomePageController(rot13Client, clock);
 
 	config.rot13ServicePort = rot13Port;
@@ -1043,22 +1116,34 @@ async function simulatePostAsync({
 	if (rot13Error !== undefined) {
 		td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
 			transformPromise: Promise.reject(rot13Error),
+			cancelFn,
+		});
+	}
+	else if (rot13Hang) {
+		td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+			transformPromise: new Promise(() => {}),
+			cancelFn,
 		});
 	}
 	else {
 		td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
 			transformPromise: Promise.resolve(rot13Response),
+			cancelFn,
 		});
 	}
 
-	const response = await controller.postAsync(request, config);
+	const responsePromise = controller.postAsync(request, config);
 
 	return {
-		response,
+		responsePromise,
 		rot13Client,
 		log,
+		clock,
+		cancelFn,
 	};
 }
+
+
 
 const IRRELEVANT_INPUT = "irrelevant_input";
 const IRRELEVANT_PORT = 42;
