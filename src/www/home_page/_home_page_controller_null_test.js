@@ -578,7 +578,7 @@ describe.only("Home Page Controller", () => {
 			 * ways to do this, I find that helper methods are more useful than beforeEach() methods. My approach was
 			 * to create a simulatePostAsync() method that took optional parameters and returned an object with multiple
 			 * fields. Like this:
-			 *      function simulatePostAsync({
+			 *      async function simulatePostAsync({
 			 *        body = `text=${IRRELEVANT_INPUT}`,        // create an "IRRELEVANT_INPUT" constant
 			 *        rot13Client = Rot13Client.createNull(),
 			 *        rot13Port = IRRELEVANT_PORT,              // create an "IRRELEVANT_PORT" constant
@@ -613,7 +613,9 @@ describe.only("Home Page Controller", () => {
 			 *        }]);
 			 *      });
 			 *
-			 * 3. Once the code has been factored out, implementing this test is just a matter of using the new
+			 * 3. Refactor the remaining tests, other than challenge #1, to use simulatePostAsync().
+			 *
+			 * 4. Once the code has been factored out, implementing this test is just a matter of using the new
 			 * abstraction and making the appropriate assertions. Like this:
 			 *      const { response, rot13Requests, logOutput } = await simulatePostAsync({
 			 *        body: "text=one&text=two",
@@ -626,9 +628,9 @@ describe.only("Home Page Controller", () => {
 			 *        message: "form parse error in POST /",
 			 *        details: "multiple 'text' form fields found",
 			 *        body: "text=one&text=two",
-			 *      });
+			 *      }]);
 			 *
-			 * 4. To make the test pass, add another guard clause to the production code.
+			 * 5. To make the test pass, add another guard clause to the production code.
 			 */
 
 			// Your test here.
