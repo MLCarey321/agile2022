@@ -100,17 +100,6 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *      return homePageView.homePage()
 			 */
 
-			const rot13Client = td.instance(Rot13Client);
-			const clock = td.instance(Clock);
-			const controller = new HomePageController(rot13Client, clock);
-
-			const request = td.instance(HttpRequest);
-			const config = td.instance(WwwConfig);
-			const response = await controller.getAsync(request, config);
-
-			const expected = homePageView.homePage();
-			assert.deepEqual(response, expected);
-
 			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
 
 			// Act: call controller.getAsync() -- don't forget to await (It's not strictly necessary in this case, but
@@ -173,15 +162,6 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *      await this._rot13Client.transformAsync(123, "some text");
 			 *
 			 */
-
-			const { rot13Client } = await simulatePostAsync({
-				body: "text=hello%20world",
-				rot13Port: 999,
-			});
-
-			td.verify(rot13Client.transform(999, "hello world"));
-
-
 
 			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
 
@@ -356,13 +336,6 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 */
 
-			const { response } = await simulatePostAsync({
-				rot13Response: "my_response",
-			});
-			const expected = homePageView.homePage("my_response");
-			assert.deepEqual(response, expected);
-
-
 			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
 
 			// Act: call controller.postAsync() -- don't forget to await
@@ -399,13 +372,6 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * 3. The test should pass without needing any changes to the production code.
 			 */
-
-			const { rot13Client } = await simulatePostAsync({
-				rot13Port: 999,
-				body: "unrelated=one&text=two&also_unrelated=three"
-			});
-			td.verify(rot13Client.transform(999, "two"));
-
 
 			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
 
@@ -504,19 +470,6 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *      });
 			 *
 			 */
-
-			const { response, rot13Client, log } = await simulatePostAsync({
-				body: ""
-			});
-
-			assert.deepEqual(response, homePageView.homePage());
-			td.verify(rot13Client.transform(), { times: 0, ignoreExtraArgs: true });
-			td.verify(log.monitor({
-				message: "form parse error in POST /",
-				details: "'text' form field not found",
-				body: "",
-	     }));
-
 
 			// Your test here.
 		});
@@ -641,18 +594,6 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 * 5. To make the test pass, add another guard clause to the production code.
 			 */
 
-			const { response, rot13Client, log } = await simulatePostAsync({
-				body: "text=one&text=two",
-			});
-
-			assert.deepEqual(response, homePageView.homePage());
-			td.verify(rot13Client.transform(), { times: 0, ignoreExtraArgs: true });
-			td.verify(log.monitor({
-				message: "form parse error in POST /",
-				details: "multiple 'text' form fields found",
-				body: "text=one&text=two",
-			}));
-
 			// Your test here.
 		});
 
@@ -748,17 +689,6 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *      }
 			 *
 			 */
-
-			const rot13Error = new Error("my_error");
-			const { response, log } = await simulatePostAsync({
-				rot13Error
-			});
-
-			assert.deepEqual(response, homePageView.homePage("ROT-13 service failed"));
-			td.verify(log.emergency({
-				message: "ROT-13 service error in POST /",
-				error: rot13Error,
-			}));
 
 			// Your test here.
 		});
@@ -1061,21 +991,6 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 * 19. After everything is working, be sure to look for opportunities to refactor the tests and production code.
 			 *
 			 */
-			const { responsePromise, clock, log, cancelFn } = simulatePost({
-				rot13Hang: true,
-			});
-			await clock.advanceNullTimersAsync();
-			const response = await responsePromise;
-
-			assert.deepEqual(response, homePageView.homePage("ROT-13 service timed out"));
-			td.verify(log.emergency({
-				message: "ROT-13 service timed out in POST /",
-				timeoutInMs: 5000,
-			}));
-			td.verify(cancelFn());
-
-
-
 
 			// Your test here.
 		});
@@ -1083,67 +998,3 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 	});
 
 });
-
-
-async function simulatePostAsync(options) {
-	const { responsePromise, ...remainder } = simulatePost(options);
-	return {
-		response: await responsePromise,
-		...remainder
-	};
-}
-
-function simulatePost({
-	body = `text=${IRRELEVANT_INPUT}`,
-	rot13Port = IRRELEVANT_PORT,
-	rot13Input = IRRELEVANT_INPUT,
-	rot13Response = "irrelevant ROT-13 response",
-	rot13Error,
-	rot13Hang = false,
-} = {}) {
-	const rot13Client = td.instance(Rot13Client);
-	const clock = Clock.createNull();
-	const request = td.instance(HttpRequest);
-	const config = td.instance(WwwConfig);
-	const log = td.object(new Log());
-	const cancelFn = td.function();
-	const controller = new HomePageController(rot13Client, clock);
-
-	config.rot13ServicePort = rot13Port;
-	config.log = log;
-	td.when(request.readBodyAsync()).thenResolve(body);
-
-	if (rot13Error !== undefined) {
-		td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
-			transformPromise: Promise.reject(rot13Error),
-			cancelFn,
-		});
-	}
-	else if (rot13Hang) {
-		td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
-			transformPromise: new Promise(() => {}),
-			cancelFn,
-		});
-	}
-	else {
-		td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
-			transformPromise: Promise.resolve(rot13Response),
-			cancelFn,
-		});
-	}
-
-	const responsePromise = controller.postAsync(request, config);
-
-	return {
-		responsePromise,
-		rot13Client,
-		log,
-		clock,
-		cancelFn,
-	};
-}
-
-
-
-const IRRELEVANT_INPUT = "irrelevant_input";
-const IRRELEVANT_PORT = 42;

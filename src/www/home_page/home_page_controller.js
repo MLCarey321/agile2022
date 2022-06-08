@@ -36,9 +36,6 @@ module.exports = class HomePageController {
 	getAsync(request, config) {
 		ensure.signature(arguments, [ HttpRequest, WwwConfig ]);
 
-		return homePageView.homePage();
-
-
 		/*
 		 * Hint: To implement this method, uncomment the following line.
 		 */
@@ -47,54 +44,6 @@ module.exports = class HomePageController {
 
 	async postAsync(request, config) {
 		ensure.signature(arguments, [ HttpRequest, WwwConfig ]);
-
-		const body = await request.readBodyAsync();
-		const formData = new URLSearchParams(body);
-		const textFields = formData.getAll("text");
-		if (textFields.length === 0) {
-			config.log.monitor({
-				message: "form parse error in POST /",
-				details: "'text' form field not found",
-				body,
-			});
-			return homePageView.homePage();
-		}
-		else if (textFields.length !== 1) {
-			config.log.monitor({
-				message: "form parse error in POST /",
-				details: "multiple 'text' form fields found",
-				body,
-			});
-			return homePageView.homePage();
-		}
-
-		const TIMEOUT_IN_MS = 5000;
-
-		const userInput = textFields[0];
-		try {
-			const { transformPromise, cancelFn } = this._rot13Client.transform(config.rot13ServicePort, userInput);
-			const output = await this._clock.timeoutAsync(
-				TIMEOUT_IN_MS,
-				transformPromise,
-				() => {
-					config.log.emergency({
-						message: "ROT-13 service timed out in POST /",
-						timeoutInMs: TIMEOUT_IN_MS,
-					});
-					cancelFn();
-					return "ROT-13 service timed out";
-				}
-			);
-			return homePageView.homePage(output);
-		}
-		catch(error) {
-			config.log.emergency({
-				message: "ROT-13 service error in POST /",
-				error,
-			});
-			return homePageView.homePage("ROT-13 service failed");
-		}
-
 
 		// your production code goes here
 	}
