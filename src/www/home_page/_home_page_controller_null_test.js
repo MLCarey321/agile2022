@@ -674,14 +674,54 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * Hints:
 			 *
-			 * 1. This is similar to challenge #3 and challenge #6. Use the tests for those challenges as inspiration.
+			 * 1. This is similar to challenge #3 and challenge #6. You can use those tests as inspiration.
 			 *
-			 * 2. When the Rot13Client encounters an error, it will throw an exception. Your production code will need to
-			 * catch the exception. In the exception handler, log the error.
+			 * 2. To start with, you'll need to create a Rot13Client that throws an error:
+			 *      const rot13Client = Rot13Client.createNull([{ error: "my_error" }]);
 			 *
-			 * 3. Don't forget to check that the controller returns the correct home page. You don't need to do anything
-			 * fancy; just put the message in the text field, like this:
-			 *    return homePageView.homePage("ROT-13 service failed");
+			 * 3. Next, call simulateGetAsync() and retrieve the variables you need for your assertions. You'll need
+			 * to provide the ROT-13 port because it's going to be part of your error assertion:
+			 *      const { response, logOutput } = await simulatePostAsync({
+			 *        rot13Client,
+			 *        rot13Port: 999,
+			 *      });
+			 *
+			 * 4. When you run the test, it will fail, because the production code isn't handling the error. Modify
+			 * postAsync() to catch the error:
+			 *      try {
+			 *        const output = await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
+			 *        return homePageView.homePage(output);
+			 *      }
+			 *      catch (error) {
+			 *      }
+			 *
+			 * 5. Now you can test that the error handler works correctly. Assert that it returns the correct response:
+			 *      assert.deepEqual(response, homePageView.homePage("ROT-13 service failed"));
+			 *
+			 * 6. The test will fail because the error handler isn't returning anything. Add the return value:
+			 *      catch (error) {
+			 *        return homePageView.homePage("ROT-13 service failed");
+			 *      }
+			 *
+			 * 7. Finally, assert that the log is being written. The error message is complicated. You can either
+			 * paste in the literal value, or you can use the Rot13Client.nullErrorString() helper method. Both
+			 * approaches have their benefits: A literal string makes the test more understandable, and alerts you
+			 * if the string ever changes. The helper method shields you against changes, at the cost of making
+			 * the behavior of the code a little harder to understand.
+			 *      assert.deepEqual(logOutput, [{
+			 *        alert: "emergency",
+			 *        message: "ROT-13 service error in POST /",
+			 *        error: "Error: " + Rot13Client.nullErrorString(999, "my_error"),
+			 *      }]);
+			 *
+			 * 8. The test will fail because the error handler isn't writing to the log. Add it:
+			 *      catch (error) {
+			 *        config.log.emergency({
+			 *          message: "ROT-13 service error in POST /",
+			 *          error,
+			 *        });
+			 *        return homePageView.homePage("ROT-13 service failed");
+			 *      }
 			 *
 			 */
 
