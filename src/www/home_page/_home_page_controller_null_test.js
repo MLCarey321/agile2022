@@ -299,7 +299,7 @@ describe.only("Home Page Controller", () => {
 		 *      const body = await request.readBodyAsync();
 		 *
 		 * 5. Parse the request body:
-		 *      const formData = new URLSearchParams(requestBody);
+		 *      const formData = new URLSearchParams(body);
 		 *      const textFields = formData.getAll("text");
 		 *      const userInput = textFields[0];
 		 *
