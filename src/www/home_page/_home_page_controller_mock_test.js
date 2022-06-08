@@ -32,22 +32,19 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * Useful methods:
 			 *
-			 * 1. const controller = HomePageController.createNull()
+			 * 1. const mock = td.instance(class)
+			 *      Create a "mock" instance of a class. E.g., "const rot13Client = td.instance(Rot13Client)".
+			 *
+			 * 2. const controller = HomePageController.createNull()
 			 *      Create a HomePageController.
 			 *
-			 * 2. const response = await controller.getAsync(request, config)
+			 * 3. const response = await controller.getAsync(request, config)
 			 *      Handle the GET request.
 			 *
-			 * 3. const request = HttpRequest.createNull()
-			 *      Create an HttpRequest.
-			 *
-			 * 4. const config = WwwConfig.createNull()
-			 *      Create a WwwConfig.
-			 *
-			 * 5. const response = homePageView.homePage()
+			 * 4. const response = homePageView.homePage()
 			 *      Render the home page.
 			 *
-			 * 6. assert.deepEqual(actual, expected)
+			 * 5. assert.deepEqual(actual, expected)
 			 *      Compare two objects.
 			 *
 			 *
@@ -73,18 +70,21 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * Hints:
 			 *
-			 * 1. Your test will need a HomePageController. You can construct it with HomePageController.createNull():
-			 *      const controller = HomePageController.createNull();
+			 * 1. You'll need a HomePageController, but before you can construct it, you'll need to create mock versions
+			 * of its dependencies, rot13Client and clock. You can do that with td.instance():
+			 *      const rot13Client = td.instance(Rot13Client);
+			 * 			const clock = td.instance(Clock);
+			 *      const controller = new HomePageController(rot13Client, clock);
 			 *
-			 * 2. Your test will need to simulate a GET request. You can do that by calling controller.getAsync(). Don't
-			 * forget to 'await' it.
-			 *      const response = await controller.getAsync(request, config);
+			 * 2. Your test will need to simulate a GET request. You can do that by calling controller.getAsync().
+			 * Don't forget to 'await' it.
+			 * 			const response = await controller.getAsync(request, config);
 			 *
 			 * 3. getAsync() expects a 'HttpRequest' object and a 'WwwConfig' object. (The router passes these two
-			 * parameters to every controller method.) Both of them can be instantiated by calling their createNull()
-			 * static methods:
-			 *      const request = HttpRequest.createNull();
-			 *      const config = WwwConfig.createNull();
+			 * parameters to every controller method.) You can create mock versions with td.instance() again:
+			 * 			const request = td.instance(HttpRequest);
+			 * 			const config = td.instance(WwwConfig);
+			 * 			const response = await controller.getAsync(request, config);
 			 *
 			 * 4. You'll need an 'expected' value to compare against the results of getAsync(). You can use
 			 * homePageView.homePage() as your expected value.
@@ -100,7 +100,18 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *      return homePageView.homePage()
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, and WwwConfig
+			const rot13Client = td.instance(Rot13Client);
+			const clock = td.instance(Clock);
+			const controller = new HomePageController(rot13Client, clock);
+
+			const request = td.instance(HttpRequest);
+			const config = td.instance(WwwConfig);
+			const response = await controller.getAsync(request, config);
+
+			const expected = homePageView.homePage();
+			assert.deepEqual(response, expected);
+
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, and WwwConfig.
 
 			// Act: call controller.getAsync() -- don't forget to await (It's not strictly necessary in this case, but
 			// get into the habit of using "await" on Async() methods.)

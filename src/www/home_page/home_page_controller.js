@@ -36,6 +36,9 @@ module.exports = class HomePageController {
 	getAsync(request, config) {
 		ensure.signature(arguments, [ HttpRequest, WwwConfig ]);
 
+		return homePageView.homePage();
+
+
 		/*
 		 * Hint: To implement this method, uncomment the following line.
 		 */
