@@ -70,21 +70,21 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * Hints:
 			 *
-			 * 1. You'll need a HomePageController, but before you can construct it, you'll need to create mock versions
-			 * of its dependencies, rot13Client and clock. You can do that with td.instance():
+			 * 1. Start by creating mock versions of all your dependencies. To construct HomePageController, you'll
+			 * need a mock instance of Rot13Client and Clock, and to call getAsync(), you'll need a mock instance
+			 * of HttpRequest and WwwConfig. (The router passes those two parameters to every controller method.)
+			 * You can create mock instances with td.instance():
 			 *      const rot13Client = td.instance(Rot13Client);
-			 * 			const clock = td.instance(Clock);
+			 *      const clock = td.instance(Clock);
+			 *      const request = td.instance(HttpRequest);
+			 *      const config = td.instance(WwwConfig);
+			 *
+			 * 2. Now you can construct HomePageController:
 			 *      const controller = new HomePageController(rot13Client, clock);
 			 *
-			 * 2. Your test will need to simulate a GET request. You can do that by calling controller.getAsync().
-			 * Don't forget to 'await' it.
-			 * 			const response = await controller.getAsync(request, config);
-			 *
-			 * 3. getAsync() expects a 'HttpRequest' object and a 'WwwConfig' object. (The router passes these two
-			 * parameters to every controller method.) You can create mock versions with td.instance() again:
-			 * 			const request = td.instance(HttpRequest);
-			 * 			const config = td.instance(WwwConfig);
-			 * 			const response = await controller.getAsync(request, config);
+			 * 3. Next, simulate a GET request. You can do that by calling controller.getAsync(). Don't forget to
+			 * 'await' it.
+			 * 	    const response = await controller.getAsync(request, config);
 			 *
 			 * 4. You'll need an 'expected' value to compare against the results of getAsync(). You can use
 			 * homePageView.homePage() as your expected value.
@@ -111,7 +111,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			const expected = homePageView.homePage();
 			assert.deepEqual(response, expected);
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, and WwwConfig.
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
 
 			// Act: call controller.getAsync() -- don't forget to await (It's not strictly necessary in this case, but
 			// get into the habit of using "await" on Async() methods.)
@@ -135,93 +135,57 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * Useful methods:
 			 *
-			 * 1. const controller = HomePageController.createNull({ rot13Client })
-			 *      Create a HomePageController that uses the provided rot13Client. Note that the parameter is an object
-			 *      with an optional field named "rot13Client". Don't forget the curly braces. If you use a different
-			 *      variable name for your rot13Client, you have to specify it, like this:
-			 *          createNull({ rot13Client: myDifferentName });
+			 * 1. td.verify(mock.method(arguments))
+			 *      Check that a mock object's method was called with specific arguments. For example:
+			 *          td.verify(rot13Client.transformAsync(123, "some text"));
 			 *
-			 * 2. const rot13Client = Rot13Client.createNull()
-			 *      Create a Rot13Client.
-			 *
-			 * 3. const rot13Requests = rot13Client.trackRequests()
-			 *      Track requests made by rot13Client. This returns a reference to an empty array on the heap. Every
-			 *      time rot13Client makes a request to the ROT-13 service, an object describing the request is appended
-			 *      to the array. The object looks like this:
-			 *          {
-			 *            port: 123,          // The port of the ROT-13 service
-			 *            text: "some text"   // The text sent to the service
-			 *          }
-			 *
-			 * 4. const response = await controller.postAsync(request, config)
+			 * 2. const response = await controller.postAsync(request, config)
 			 *      Handle the POST request.
 			 *
-			 * 5. const transformedText = await rot13Client.transformAsync(port, text)
+			 * 3. const transformedText = await rot13Client.transformAsync(port, text)
 			 *      Call the ROT-13 service.
-			 *
-			 *
-			 * JavaScript syntax notes:
-			 *
-			 * 1. Object shorthand:
-			 * JavaScript objects, such as "{ rot13Client: myClient }" consist of multiple fields, each separated by a comma.
-			 * Each field consists of a name ("rot13Client") and a value (the "myClient" variable). However, if the name of
-			 * the variable is the same as the name of the field, you can eliminate it. So if you have a field named
-			 * "rot13Client" with a variable named "rot13Client", you can just say "{ rot13Client }".
-			 *
-			 * 2. Optional fields and parameters:
-			 * It's common for JavaScript functions to take an object as a parameter. The function will expect the object
-			 * to have certain fields. Often, those fields are optional. If no value is provided, the function will fill
-			 * in a default. In fact, the whole parameter can be optional. That's how HomePageController.createNull() works.
-			 * If you don't provide an object with a "rot13Client" field, createNull() will fill one in for you. You can
-			 * see how this works in the declaration of createNull() in home_page_controller.js (around lines 19-22).
 			 *
 			 *
 			 * Hints:
 			 *
-			 * 1. When you called HomePageController.createNull() in the last challenge, it created the Rot13Client for you.
-			 * But in this challenge, you’ll need access to the Rot13Client instance in your test, so you'll need to create
-			 * it in your test and pass it into HomePageController, like this:
-			 *      const rot13Client = Rot13Client.createNull();
-			 *      const controller = HomePageController.createNull({ rot13Client });
+			 * 1. Start by copying your setup from the last test. (Yes, duplication is bad. But premature abstraction
+			 * is worse. We'll factor out the duplication later.)
+			 *      const rot13Client = td.instance(Rot13Client);
+			 *      const clock = td.instance(Clock);
+			 *      const request = td.instance(HttpRequest);
+			 *      const config = td.instance(WwwConfig);
+			 *      const controller = new HomePageController(rot13Client, clock);
 			 *
-			 * 2. Your test needs to see which requests have been made to the ROT-13 service. You can do that by calling
-			 * rot13Client.trackRequests(). It returns an array that is updated every time a new request is made. Note that
-			 * you have to call trackRequests() BEFORE making the request.
-			 *      const rot13Requests = rot13Client.trackRequests();
-			 *
-			 * 3. To simulate a POST request, call controller.postAsync(). It expects HttpRequest and WwwConfig parameters,
-			 * just like getAysnc() did in Challenge #1. This time, though, you can ignore the response, because your
-			 * assertion will look at rot13Requests instead.
-			 *      const request = HttpRequest.createNull();
-			 *      const config = WwwConfig.createNull();
+			 * 2. To simulate a POST request, call controller.postAsync(). It expects HttpRequest and WwwConfig parameters,
+			 * just like getAsync() did in Challenge #1. This time, though, you can ignore the response, because your
+			 * assertion is looking at rot13Client instead.
 			 *      await controller.postAsync(request, config);
 			 *
-			 * 4. Compare the rot13Requests array (from rot13Client.trackRequests()) to your expected requests using
-			 * assert.deepEqual(). It will contain an array of objects. Each object represents a single request. Since
-			 * you're only expecting the production code to make one request, you can expect an array with one object.
-			 * Like this:
-			 *      assert.deepEqual(rot13Requests, [{
-			 *        port: 123,           // The port of the ROT-13 service
-			 *        text: "some text",   // The text sent to the service
-			 *      }]);
+			 * 3. Check that rot13Client was called by postAsync. To do that, use td.verify():
+			 *      td.verify(rot13Client.transformAsync(123, "some text"));
 			 *
-			 * 5. When you run the test, it will fail saying the actual value is "[]" (an empty array). This means your
-			 * production code isn't making any ROT-13 service requests.
+			 * 4. When you run the test, it will fail saying "there were no invocations of the test double." This means
+			 * your production code isn't calling rot13Client.transformAsync().
 			 *
-			 * 6. You can call the ROT-13 service in your production code by using this._rot13Client.transformAsync().
+			 * 5. You can call the ROT-13 service in your production code by using this._rot13Client.transformAsync().
 			 * You can hardcode the port and text for this challenge, and you don't need to worry about the return value.
 			 * Like this:
 			 *      await this._rot13Client.transformAsync(123, "some text");
 			 *
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
-			// don't forget to pass Rot13Client into HomePageController
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			const rot13Client = td.instance(Rot13Client);
+			const clock = td.instance(Clock);
+			const request = td.instance(HttpRequest);
+			const config = td.instance(WwwConfig);
+			const controller = new HomePageController(rot13Client, clock);
 
 			// Act: call controller.postAsync() -- don't forget to await
+			await controller.postAsync(request, config);
 
-			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
-			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
+			// Assert: check that rot13Client.transformAsync() was called
+			td.verify(rot13Client.transformAsync(123, "some text"));
 		});
 
 
@@ -907,3 +871,23 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 	});
 
 });
+
+
+
+/*
+ 			 * JavaScript syntax notes:
+ 			 *
+ 			 * 1. Object shorthand:
+ 			 * JavaScript objects, such as "{ rot13Client: myClient }" consist of multiple fields, each separated by a comma.
+ 			 * Each field consists of a name ("rot13Client") and a value (the "myClient" variable). However, if the name of
+ 			 * the variable is the same as the name of the field, you can eliminate it. So if you have a field named
+ 			 * "rot13Client" with a variable named "rot13Client", you can just say "{ rot13Client }".
+ 			 *
+ 			 * 2. Optional fields and parameters:
+ 			 * It's common for JavaScript functions to take an object as a parameter. The function will expect the object
+ 			 * to have certain fields. Often, those fields are optional. If no value is provided, the function will fill
+ 			 * in a default. In fact, the whole parameter can be optional. That's how HomePageController.createNull() works.
+ 			 * If you don't provide an object with a "rot13Client" field, createNull() will fill one in for you. You can
+ 			 * see how this works in the declaration of createNull() in home_page_controller.js (around lines 19-22).
+ 			 *
+ */

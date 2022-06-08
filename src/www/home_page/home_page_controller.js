@@ -48,6 +48,9 @@ module.exports = class HomePageController {
 	async postAsync(request, config) {
 		ensure.signature(arguments, [ HttpRequest, WwwConfig ]);
 
+		await this._rot13Client.transformAsync(123, "some text");
+
+
 		// your production code goes here
 	}
 
