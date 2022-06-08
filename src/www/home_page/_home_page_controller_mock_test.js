@@ -247,8 +247,8 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 		 *
 		 * 1. td.when(mock.method(arguments)).thenResolve(returnValue);
 		 *      Set up a mock object to return a "resolved promise" when a method is called with the exact arguments
-		 *      provided. A "resolved promise" is what async functions return, and all the functions we're mocking
-		 *      are async. (Normal, non-async functions would use .thenReturn().) For example:
+		 *      provided. A "resolved promise" is what happens when an async function returns a value, and all the
+		 *      methods we're mocking are async.
 		 *          td.when(request.readBodyAsync()).thenResolve("text=hello%20world");
 		 *
 		 * 2. const body = await request.readBodyAsync()
@@ -672,38 +672,93 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *          {
 			 *            alert: "emergency",
 			 *            message: "ROT-13 service error in POST /",
-			 *            error: "Error: " + Rot13Client.nullErrorString(port, "my_error"),
+			 *            error: "Error: my_error",
 			 *          }
 			 *
 			 *
 			 *  Useful methods:
 			 *
-			 * 1. const rot13Client = Rot13Client.createNull([{ error: "my_error" }])
-			 *      Create a Rot13Client that will throw an error the first time it's called. Note that the parameter
-			 *      is an array of objects. (If you wanted to control additional responses, you would add more objects
-			 *      to the array.)
+			 * 1. td.when(mock.method(arguments)).thenReject(new Error("error"));
+			 *      Set up a mock object to return a "rejected promise" when a method is called with the exact arguments
+			 *      provided. A "rejected promise" is what happens when async function throws an exception. For example:
+			 *          td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenReject(new Error("my_error"));
 			 *
 			 * 2. log.emergency(data)
 			 *      Write data to the log with the "emergency" alert level. "data" must be an object, but it may contain
 			 *      any fields containing any values.
 			 *
-			 * 3. Rot13Client.nullErrorString(port, error)
-			 *      When Rot13Client.createNull() is configured to throw an error, the error message includes a long
-			 *      and complicated string. This method provides that string.
-			 *
 			 *
 			 * Hints:
 			 *
-			 * 1. This is similar to challenge #3 and challenge #6. Use the tests for those challenges as inspiration.
+			 * 1. You'll need to modify your simulatePostAsync() abstraction to support causing an error. In the
+			 * function declaration, add a parameter for the error, like this:
+			 *      async function simulatePostAsync({
+			 *        body = `text=${IRRELEVANT_INPUT}`,
+			 *        rot13Port = IRRELEVANT_PORT,
+			 *        rot13Input = IRRELEVANT_INPUT,
+			 *        rot13Response = "irrelevant ROT-13 response",
+			 *        rot13Error,
+			 *      } = {}) {
 			 *
-			 * 2. When the Rot13Client encounters an error, it will throw an exception. Your production code will need to
-			 * catch the exception. In the exception handler, log the error.
+			 * 2. Next, modify the body of simulatePostAsync() to make rot13Client throw an error if rot13Error is
+			 * set, or to behave normally if it isn't. Like this:
+			 *      if (rot13Error !== undefined) {
+			 *        td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenReject(rot13Error);
+			 *      }
+			 *      else {
+			 *        td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenResolve(rot13Response);
+			 *      }
 			 *
-			 * 3. Don't forget to check that the controller returns the correct home page. You don't need to do anything
-			 * fancy; just put the message in the text field, like this:
-			 *    return homePageView.homePage("ROT-13 service failed");
+			 * 3. Now, in your test, you can use simulatePostAsync to cause the error. You'll need to define the error first:
+			 *      const rot13Error = new Error("my_error");
+			 *      const { response, log } = await simulatePostAsync({
+			 *        rot13Error
+			 *      });
+			 *
+			 * 4. When you run the test, it will fail, because the production code isn't handling the error. Modify
+			 * postAsync() to catch the error:
+			 *      try {
+			 *        const output = await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
+			 *        return homePageView.homePage(output);
+			 *      }
+			 *      catch (error) {
+			 *      }
+			 *
+			 * 5. Now you can test that the error handler works correctly. Assert that it returns the correct response:
+			 *      assert.deepEqual(response, homePageView.homePage("ROT-13 service failed"));
+			 *
+			 * 6. The test will fail because the error handler isn't returning anything. Add the return value:
+			 *      catch (error) {
+			 *        return homePageView.homePage("ROT-13 service failed");
+			 *      }
+			 *
+			 * 7. Finally, assert that the log is being written:
+			 *      td.verify(log.emergency({
+			 *        message: "ROT-13 service error in POST /",
+			 *        error: rot13Error,
+			 *      }));
+			 *
+			 * 8. The test will fail because the error handler isn't writing to the log. Add it:
+			 *      catch (error) {
+			 *        config.log.emergency({
+			 *          message: "ROT-13 service error in POST /",
+			 *          error,
+			 *        });
+			 *        return homePageView.homePage("ROT-13 service failed");
+			 *      }
 			 *
 			 */
+
+			const rot13Error = new Error("my_error");
+			const { response, log } = await simulatePostAsync({
+				rot13Error
+			});
+
+			assert.deepEqual(response, homePageView.homePage("ROT-13 service failed"));
+			td.verify(log.emergency({
+				message: "ROT-13 service error in POST /",
+				error: rot13Error,
+			}));
 
 			// Your test here.
 		});
@@ -918,10 +973,11 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 
 
 async function simulatePostAsync({
-	body = `text=${IRRELEVANT_INPUT}`,        // create an "IRRELEVANT_INPUT" constant
-	rot13Port = IRRELEVANT_PORT,              // create an "IRRELEVANT_PORT" constant
+	body = `text=${IRRELEVANT_INPUT}`,
+	rot13Port = IRRELEVANT_PORT,
 	rot13Input = IRRELEVANT_INPUT,
 	rot13Response = "irrelevant ROT-13 response",
+	rot13Error,
 } = {}) {
 	const rot13Client = td.instance(Rot13Client);
 	const clock = td.instance(Clock);
@@ -933,7 +989,13 @@ async function simulatePostAsync({
 	config.rot13ServicePort = rot13Port;
 	config.log = log;
 	td.when(request.readBodyAsync()).thenResolve(body);
-	td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenResolve(rot13Response);
+
+	if (rot13Error !== undefined) {
+		td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenReject(rot13Error);
+	}
+	else {
+		td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenResolve(rot13Response);
+	}
 
 	const response = await controller.postAsync(request, config);
 

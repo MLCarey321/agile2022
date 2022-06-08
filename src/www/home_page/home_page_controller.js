@@ -69,9 +69,18 @@ module.exports = class HomePageController {
 		}
 
 		const userInput = textFields[0];
-		const output = await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
+		try {
+			const output = await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
+			return homePageView.homePage(output);
+		}
+		catch(error) {
+			config.log.emergency({
+				message: "ROT-13 service error in POST /",
+				error,
+			});
+			return homePageView.homePage("ROT-13 service failed");
+		}
 
-		return homePageView.homePage(output);
 
 		// your production code goes here
 	}
