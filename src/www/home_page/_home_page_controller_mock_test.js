@@ -398,23 +398,29 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 * Hints:
 			 *
 			 * 1. You can copy and paste the test code from challenge #2. Just change the request body:
-			 *    const body = "unrelated=one&text=two&also_unrelated=three";
+			 *    td.when(request.readBodyAsync()).thenResolve("unrelated=one&text=two&also_unrelated=three");
 			 *
 			 * 2. Remember to change the assertion:
-			 *    assert.deepEqual(rot13Requests, [{
-			 *      port: 999,           // The port of the ROT-13 service
-			 *      text: "two",         // The text sent to the service
-			 *    }]);
+			 *    td.verify(rot13Client.transformAsync(999, "two"));
 			 *
+			 * 3. The test should pass without needing any changes to the production code.
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
-			// don't forget to pass Rot13Client into HomePageController
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			const rot13Client = td.instance(Rot13Client);
+			const clock = td.instance(Clock);
+			const request = td.instance(HttpRequest);
+			const config = td.instance(WwwConfig);
+			const controller = new HomePageController(rot13Client, clock);
+
+			config.rot13ServicePort = 999;
+			td.when(request.readBodyAsync()).thenResolve("unrelated=one&text=two&also_unrelated=three");
 
 			// Act: call controller.postAsync() -- don't forget to await
+			await controller.postAsync(request, config);
 
-			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
-			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
+			// Assert: check that rot13Client.transformAsync() was called
+			td.verify(rot13Client.transformAsync(999, "two"));
 		});
 
 		it("logs warning when form field not found (and treats request like GET)", async () => {
