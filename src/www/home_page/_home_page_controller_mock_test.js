@@ -179,7 +179,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 				rot13Port: 999,
 			});
 
-			td.verify(rot13Client.transformAsync(999, "hello world"));
+			td.verify(rot13Client.transform(999, "hello world"));
 
 
 
@@ -404,7 +404,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 				rot13Port: 999,
 				body: "unrelated=one&text=two&also_unrelated=three"
 			});
-			td.verify(rot13Client.transformAsync(999, "two"));
+			td.verify(rot13Client.transform(999, "two"));
 
 
 			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
@@ -510,7 +510,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			});
 
 			assert.deepEqual(response, homePageView.homePage());
-			td.verify(rot13Client.transformAsync(), { times: 0, ignoreExtraArgs: true });
+			td.verify(rot13Client.transform(), { times: 0, ignoreExtraArgs: true });
 			td.verify(log.monitor({
 				message: "form parse error in POST /",
 				details: "'text' form field not found",
@@ -646,7 +646,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			});
 
 			assert.deepEqual(response, homePageView.homePage());
-			td.verify(rot13Client.transformAsync(), { times: 0, ignoreExtraArgs: true });
+			td.verify(rot13Client.transform(), { times: 0, ignoreExtraArgs: true });
 			td.verify(log.monitor({
 				message: "form parse error in POST /",
 				details: "multiple 'text' form fields found",
@@ -767,10 +767,11 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 		/* CHALLENGE #8: Changing the design
 		 *
 		 * For the next challenge, you'll need to call Rot13Client.transform() instead of Rot13Client.transformAsync().
-		 * Before starting that test, refactor the code to support the new design. (Luckily, this is much easier to
-		 * do with nullable infrastructure than with test doubles.) Specifically:
+		 * Before starting that test, refactor the code to support the new design. Unfortunately, this will cause
+		 * your test doubles to break. Specifically:
 		 *
 		 *    1. Change HomePageController.postAsync() to call rot13Client.transform() instead of transformAsync().
+		 *    2. Fix the tests so they pass again.
 		 *
 		 *
      * Useful methods:
@@ -782,6 +783,17 @@ describe.only("Home Page Controller (testdouble tests)", () => {
      *          const { transformPromise } = rot13Client.transform(port, text);
      *          const transformedText = await transformPromise;
      *
+		 * 2. td.when(mock.method(arguments)).thenReturn(result)
+		 *      Set up a mock object to return a value a method is called with the exact arguments provided.
+		 *      This is similar to calling .thenResolve(), except it's used by non-async functions. For example:
+		 *          td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn(result);
+     *
+     * 3. Promise.resolve(value)
+     *      Create a "resolved promise".
+     *
+     * 4. Promise.reject(new Error("error"))
+     *      Create a "rejected promise".
+     *
      *
      * Hints:
      *
@@ -792,6 +804,44 @@ describe.only("Home Page Controller (testdouble tests)", () => {
      * Then your new code would be:
      *        const { transformPromise } = this._rot13Client.transform(config.rot13ServicePort, userInput);
      *        const output = await transformPromise;
+		 *
+		 * 2. Unfortunately, changing the production code will cause several tests to break, because they assume
+		 * the code is calling transformAsync(). You'll need to find every reference to transformAsync() and change
+		 * it to use transform().
+		 *
+		 * 3. First, find the code in your simulatePostAsync() that mocks transformAsync(). If you've been following
+		 * these hints exactly, it looks like this:
+		 *      if (rot13Error !== undefined) {
+		 *        td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenReject(rot13Error);
+		 *      }
+		 *      else {
+		 *        td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenResolve(rot13Response);
+		 *      }
+		 *
+		 * 4. Change the first td.when() to mock transform() and return an object with a rejected promise, like this:
+		 *      td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+		 *        transformPromise: Promise.reject(rot13Error),
+		 *      });
+		 *
+		 * 5. If you did it correctly, the test from challenge #7 should now be passing. Next, modify the second
+		 * td.when() line. It should mock transform() and return an object with a resolved promise, like this:
+		 *      td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+		 *        transformPromise: Promise.resolve(rot13Response),
+		 *      });
+		 *
+		 * 6. That will fix the test from challenge #3. Now you need to fix the remaining tests (challenge #2 and
+		 * challenge #4) by changing their td.verify() calls. Challenge #2 should be changed as follows:
+		 * 			td.verify(rot13Client.transform(999, "hello world"));
+		 *
+		 * 7. And challenge #4 should be changed similarly:
+		 * 			td.verify(rot13Client.transform(999, "two"));
+		 *
+		 * 8. The tests should all be passing, but they haven't been all fixed yet. The tests that check that
+		 * the service isn't called are passing by coincidence. (Challenge #5 and challenge #6.) They need to
+		 * be updated too:
+		 * 			td.verify(rot13Client.transform(), { times: 0, ignoreExtraArgs: true });
+		 *
+		 * 9. Search the file to confirm there are no more uses of transformAsync() in any of the tests.
 		 *
 		 */
 
@@ -991,10 +1041,14 @@ async function simulatePostAsync({
 	td.when(request.readBodyAsync()).thenResolve(body);
 
 	if (rot13Error !== undefined) {
-		td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenReject(rot13Error);
+		td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+			transformPromise: Promise.reject(rot13Error),
+		});
 	}
 	else {
-		td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenResolve(rot13Response);
+		td.when(rot13Client.transform(rot13Port, rot13Input)).thenReturn({
+			transformPromise: Promise.resolve(rot13Response),
+		});
 	}
 
 	const response = await controller.postAsync(request, config);

@@ -70,7 +70,8 @@ module.exports = class HomePageController {
 
 		const userInput = textFields[0];
 		try {
-			const output = await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
+			const { transformPromise } = this._rot13Client.transform(config.rot13ServicePort, userInput);
+			const output = await transformPromise;
 			return homePageView.homePage(output);
 		}
 		catch(error) {
