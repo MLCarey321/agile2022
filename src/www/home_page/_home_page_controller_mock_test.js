@@ -309,31 +309,30 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * Useful methods:
 			 *
-			 * 1. const rot13Client = Rot13Client.createNull([{ response: "my_response" }])
-			 *      Create a Rot13Client that responds with "my_response" the first time it's called. Note that the
-			 *      parameter is an array of objects. (If you wanted to configure additional responses, you would add
-			 *      more objects to the array.)
-			 *
-			 * 2. const response = homePageView.homePage("my_text")
+			 * 1. const response = homePageView.homePage("my_text")
 			 *      Render the home page with "my_text" in the text field.
 			 *
 			 *
 			 * Hints:
 			 *
-			 * 1. Just like in the last challenge, you'll need to create a Rot13Client in your test. But this time, you'll
-			 * need to control what data it returns. You can do that by providing an array of objects, like this:
-			 *      const rot13Client = Rot13Client.createNull([{ response: "my_response" }]);
+			 * 1. Start by copying your setup from the last test. (Yep, still keeping an eye on that duplication.)
+			 *      const rot13Client = td.instance(Rot13Client);
+			 *      const clock = td.instance(Clock);
+			 *      const request = td.instance(HttpRequest);
+			 *      const config = td.instance(WwwConfig);
+			 *      const controller = new HomePageController(rot13Client, clock);
 			 *
-			 * 2. You'll need a valid request body. Otherwise, your parsing logic will fail:
-			 *      const request = HttpRequest.createNull({ body: "text=irrelevant_text" });
+			 * 2. This time, you'll need to control what data rot13Client returns. You'll do that by configuring
+			 * transformAsync(). But to configure it, you need to know what its arguments will be, which means you
+			 * need to set up the port and user input first:
+			 *      config.rot13ServicePort = 42;
+			 *      td.when(request.readBodyAsync()).thenResolve("text=irrelevant_text");
 			 *
-			 * (I like to use "irrelevant_xxx" for data that's required for the test to run, but not otherwise relevant
-			 * to the test at hand.)
+			 * (I like to use "42" and "irrelevant_xxx" for data that's required for the test to run, but not otherwise
+			 * relevant to the test at hand.)
 			 *
-			 * 3. You'll need a controller and config, too, but you don't need to track requests or configure a specific
-			 * port:
-			 *      const controller = HomePageController.createNull({ rot13Client });
-			 *      const config = WwwConfig.createNull();
+			 * 3. Now you can configure rot13Client.transformAsync():
+			 *      td.when(rot13Client.transformAsync(42, "irrelevant_text")).thenResolve("my_response");
 			 *
 			 * 4. Call postAsync() and check that it returns the correct response. This is just like challenge #1, except
 			 * you need to render the expected ROT-13 response into the page. You can do that by passing the expected
@@ -358,13 +357,23 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, WwwConfig, and Rot13Client -- don't forget to pass
-			// Rot13Client into HomePageController
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			const rot13Client = td.instance(Rot13Client);
+			const clock = td.instance(Clock);
+			const request = td.instance(HttpRequest);
+			const config = td.instance(WwwConfig);
+			const controller = new HomePageController(rot13Client, clock);
+
+			config.rot13ServicePort = 42;
+			td.when(request.readBodyAsync()).thenResolve("text=irrelevant_text");
+			td.when(rot13Client.transformAsync(42, "irrelevant_text")).thenResolve("my_response");
 
 			// Act: call controller.postAsync() -- don't forget to await
-			// If you get an error from rot13Client.transformAsync, make sure you're setting up the request body correctly
+			const response = await controller.postAsync(request, config);
 
 			// Assert: check that the result of postAsync() matches homePageView.homePage(expectedText)
+			const expected = homePageView.homePage("my_response");
+			assert.deepEqual(response, expected);
 		});
 
 	});

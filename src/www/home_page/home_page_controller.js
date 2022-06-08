@@ -53,8 +53,9 @@ module.exports = class HomePageController {
 		const textFields = formData.getAll("text");
 		const userInput = textFields[0];
 
-		await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
+		const output = await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
 
+		return homePageView.homePage(output);
 
 		// your production code goes here
 	}
