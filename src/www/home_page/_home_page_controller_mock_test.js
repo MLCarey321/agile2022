@@ -181,11 +181,14 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			const config = td.instance(WwwConfig);
 			const controller = new HomePageController(rot13Client, clock);
 
+			config.rot13ServicePort = 999;
+			td.when(request.readBodyAsync()).thenResolve("text=hello%20world");
+
 			// Act: call controller.postAsync() -- don't forget to await
 			await controller.postAsync(request, config);
 
 			// Assert: check that rot13Client.transformAsync() was called
-			td.verify(rot13Client.transformAsync(123, "some text"));
+			td.verify(rot13Client.transformAsync(999, "hello world"));
 		});
 
 
@@ -194,35 +197,34 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 		 * For this challenge, modify the test and production code created in Challenge #2a. Change it to use the
 		 * ROT-13 service port provided in WwwConfig rather than hard-coding the value. Specifically:
 		 *
-		 *    1. Change the previous test to configure ROT-13 service port. Use a different port than before.
+		 *    1. Change the previous test to configure the ROT-13 service port. Use a different port than before.
 		 *    2. Change the test's assertion to match the newly-configured port.
 		 *    3. Change HomePageController.postAsync() to get the port out of the config parameter.
 		 *
 		 *
 		 * Useful methods:
 		 *
-		 * 1. const config = WwwConfig.createNull({ rot13ServicePort })
-		 *    Create a WwwConfig with the provided ROT-13 service port. Note that the parameter is an object with an
-		 *    optional field named "rot13ServicePort".
-		 *
-		 * 2. const port = config.rot13ServicePort
+		 * 1. const port = config.rot13ServicePort
 		 *    Get the ROT-13 service port.
+		 *
+		 * 2. config.rot13ServicePort = 999;
+		 *    Set the service port. This only works with mocked instances of WwwConfig, because the real WwwConfig
+		 *    uses an accessor ("get" function) and doesn't provide a mutator ("set" function). Normally, to make
+		 *    a mocked function return a specific value, use'd use td.when(). But testdouble doesn't support mocking
+		 *    out accessors, as far as I can tell, so we just set the value directly.
 		 *
 		 *
 		 * Hints:
 		 *
-		 * 1. Your production code will get the port from WwwConfig, so you'll need to update the "config" line of
-		 * your test to provide the port. Use a different port to prove that your test is working:
-		 *      const config = WwwConfig.createNull({ rot13ServicePort: 999 });
+		 * 1. Your production code will get the port from WwwConfig, so you'll need to set the port on the config.
+		 * Use a different port to prove that your test is working:
+		 *      config.rot13ServicePort = 999;
 		 *
 		 * 2. Remember to update your assertion to use the new port:
-		 *      assert.deepEqual(rot13Requests, [{
-		 *        port: 999,           // The port of the ROT-13 service
-		 *        text: "some text",   // The text sent to the service
-		 *      }]);
+		 *      td.verify(rot13Client.transformAsync(999, "some text"));
 		 *
-		 * 3. When you run the test, it will fail because it expected port 999, but got port 123. This means your
-		 * production code isn't using the port defined in the config.
+		 * 3. When you run the test, it will fail because it was called with 123, but it expected port 999. This
+		 * means your production code isn't using the port defined in the config.
 		 *
 		 * 4. Change your production code to get the port out of the config object. Like this:
 		 *      await this._rot13Client.transformAsync(config.rot13ServicePort, "some text");
@@ -244,9 +246,11 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 		 *
 		 * Useful methods:
 		 *
-		 * 1. const request = HttpRequest.createNull({ body })
-		 *      Create a request with the provided body. Note that the parameter is an object with an optional field
-		 *      named "body".
+		 * 1. td.when(mock.method(arguments)).thenResolve(returnValue);
+		 *      Set up a mock object to return a "resolved promise" when a method is called with the exact arguments
+		 *      provided. A "resolved promise" is what async functions return, and all the functions we're mocking
+		 *      are async. (Normal, non-async functions would use .thenReturn().) For example:
+		 *          td.when(request.readBodyAsync()).thenResolve("text=hello%20world");
 		 *
 		 * 2. const body = await request.readBodyAsync()
 		 *      Read the request body.
@@ -261,25 +265,21 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 		 *
 		 * Hints:
 		 *
-		 * 1. Your production code will read the request body from HttpRequest, so you need to update the "request" line
-		 * of your test to provide the body. Like this:
-		 *      const body = "text=hello%20world";
-		 *      const request = HttpRequest.createNull({ body });
+		 * 1. Your production code will read the request body from HttpRequest, so you'll need to configure your
+		 * mock request to return the body. Like this:
+		 *      td.when(request.readBodyAsync()).thenResolve("text=hello%20world");
 		 *
 		 * 2. Update your assertion to use the new text field:
-		 *      assert.deepEqual(rot13Requests, [{
-		 *        port: 999,           // The port of the ROT-13 service
-		 *        text: "hello world", // The text sent to the service
-		 *      }]);
+		 *      td.verify(rot13Client.transformAsync(999, "hello world"));
 		 *
-		 * 3. When you run the test, it will fail because it expected "hello world," but got "some text". This means
-		 * your production code isn't reading the request body.
+		 * 3. When you run the test, it will fail because it was called with "some text", but expected "hello world".
+		 * This means your production code isn't reading the request body.
 		 *
 		 * 4. Change your production code to read the request body:
 		 *      const body = await request.readBodyAsync();
 		 *
 		 * 5. Parse the request body:
-		 *      const formData = new URLSearchParams(requestBody);
+		 *      const formData = new URLSearchParams(body);
 		 *      const textFields = formData.getAll("text");
 		 *      const userInput = textFields[0];
 		 *

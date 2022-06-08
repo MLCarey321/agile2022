@@ -48,7 +48,12 @@ module.exports = class HomePageController {
 	async postAsync(request, config) {
 		ensure.signature(arguments, [ HttpRequest, WwwConfig ]);
 
-		await this._rot13Client.transformAsync(123, "some text");
+		const body = await request.readBodyAsync();
+		const formData = new URLSearchParams(body);
+		const textFields = formData.getAll("text");
+		const userInput = textFields[0];
+
+		await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
 
 
 		// your production code goes here
