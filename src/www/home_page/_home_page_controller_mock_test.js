@@ -32,7 +32,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * Useful methods:
 			 *
-			 * 1. const mock = td.instance(class)
+			 * 1. const mock = td.instance(Class)
 			 *      Create a "mock" instance of a class. E.g., "const rot13Client = td.instance(Rot13Client)".
 			 *
 			 * 2. const controller = HomePageController.createNull()
@@ -442,73 +442,67 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * Useful methods:
 			 *
-			 * 1. const log = Log.createNull()
-			 *      Create a Log (an object that can write to the log).
+			 * 1. const mock = td.object(new Class())
+			 *      Create a "mock" instance of a class. In some cases, such as when a class creates functions in its
+			 *      constructor, testdouble is unable to automatically instantiate a class. This is true for the Log
+			 *      class. In that case, you can instantiate the class manually, and then use td.object() to create a
+			 *      mock version of the instance. For example:
+			 *          const log = td.object(new Log());
 			 *
-			 * 2. const config = WwwConfig.createNull({ log })
-			 *      Create a WwwConfig with the provided log. Note that the parameter is an object with an optional
-			 *      field named "log".
+			 * 2. td.verify(mock.method(), { times: 0, ignoreExtraArgs: true });
+			 *      Assert that a method is never called.
 			 *
-			 * 3. const logOutput = log.trackOutput()
-			 *      Track logging. Similar to rot13Client.trackRequests(), this returns a reference to an empty array
-			 *      on the heap. Every time a new log entry is written, an object is appended to the array. The object
-			 *      has the log's alert level (in the "alert" field) and any other fields that are written in that log
-			 *      entry. Fields containing Error objects are converted to strings.
-			 *
-			 * 4. const log = config.log
+			 * 3. const log = config.log
 			 *      Get the logger.
 			 *
-			 * 5. log.monitor(data)
+			 * 4. log.monitor(data)
 			 *      Write data to the log with the "monitor" alert level. "data" must be an object, and that object may
 			 *      contain any fields you like.
 			 *
 			 *
 			 * Hints:
 			 *
-			 * 1. Your test needs to track log output. To do that, it needs to create a log instance, provide it to the
-			 * config object, and track its output:
-			 *      const log = Log.createNull();
-			 *      const config = WwwConfig.createNull({ log });
-			 *      const logOutput = log.trackOutput();
+			 * 1. Start by instantiating your mocks. You can use the same instantiation as previous tests:
+			 *      const rot13Client = td.instance(Rot13Client);
+			 *      const clock = td.instance(Clock);
+			 *      const request = td.instance(HttpRequest);
+			 *      const config = td.instance(WwwConfig);
+			 *      const controller = new HomePageController(rot13Client, clock);
 			 *
-			 * 2. Your test also needs to track ROT-13 requests. To do that, you'll need a Rot13Client:
-			 *      const rot13Client = Rot13Client.createNull();
-			 *      const rot13Requests = rot13Client.trackRequests();
+			 * 2. This time, you'll need to set up a mock log as well. It doesn't work with the normal instantiation,
+			 * so you'll have to use td.object(). Be sure to assign it to the config object:
+			 *      const log = td.object(new Log());
+			 *      config.log = log;
 			 *
-			 * 3. Your test needs to specify an empty request body:
-			 *      const request = HttpRequest.createNull({ body: "" });
+			 * 3. Configure the body on the request:
+			 *      td.when(request.readBodyAsync()).thenResolve("");
 			 *
-			 * 3. You need a HomePageController, and it needs to use your Rot13Client:
-			 *      const controller = HomePageController.createNull({ rot13Client );
-			 *
-			 * 4. You'll need to call postAsync() and confirm that it returns the correct response:
+			 * 4. Now call postAsync() and confirm that it returns the correct response:
 			 *      const response = await controller.postAsync(request, config);
 			 *      assert.deepEqual(response, homePageView.homePage());
 			 *
-			 * 5. To break the work into smaller pieces, get this much passing before implementing the logging. When you
-			 * run the test, it will probably fail with the error "Argument #2 must be a string, but it was undefined."
-			 * This is happening because formData.getAll("text") is returning an empty array.
+			 * 5. To break the work into smaller pieces, get this much working before implementing the logging. When you
+			 * run the test, it will probably pass, even though it would fail in production. That's because the mock
+			 * rot13Client is returning an empty string by default. (The real code would throw an exception because
+			 * input is undefined.) Make the test fail by asserting that rot13Client.transformAsync isn't called:
+			 *      td.verify(rot13Client.transformAsync(), { times: 0, ignoreExtraArgs: true });
 			 *
-			 * 6. To fix the production code, introduce a guard clause after the getAll() line:
+			 * 6. Now the test will fail, and you'll see that it was called with 'undefined'. To fix the production
+			 * code, introduce a guard clause after the getAll() line:
 			 *      const textFields = formData.getAll("text");   // already exists
 			 *      if (textFields.length === 0) {                // new code
 			 *        return homePageView.homePage();
 			 *      }
 			 *
-			 * 7. When the test passes, add an assertion in the test to confirm that no ROT-13 requests are being made.
-			 * It should pass the first time:
-			 *      assert.deepEqual(rot13Requests, []);
-			 *
-			 * 8. Now add an assertion to check the log output:
-			 *      assert.deepEqual(logOutput, [{
-			 *        alert: "monitor",
+			 * 7. Now add an assertion to check the log output:
+			 *      td.verify(log.monitor({
 			 *        message: "form parse error in POST /",
 			 *        details: "'text' form field not found",
 			 *        body: "",
-			 *      }]);
+			 *      }));
 			 *
-			 * 8. When you run the test, it will fail saying that the logOutput is an empty array. This is because the
-			 * production code isn't writing to the log.
+			 * 8. When you run the test, it will fail saying that "there were no invocations of the test double," which
+			 * means that log.monitor() isn't being called in production.
 			 *
 			 * 9. Update your guard clause to write to the log. Rather than hardcoding the body, pass in the "body"
 			 * variable.
@@ -519,6 +513,26 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *      });
 			 *
 			 */
+			const rot13Client = td.instance(Rot13Client);
+			const clock = td.instance(Clock);
+			const request = td.instance(HttpRequest);
+			const config = td.instance(WwwConfig);
+			const controller = new HomePageController(rot13Client, clock);
+
+			const log = td.object(new Log());
+			config.log = log;
+
+			td.when(request.readBodyAsync()).thenResolve("");
+
+			const response = await controller.postAsync(request, config);
+			assert.deepEqual(response, homePageView.homePage());
+			td.verify(rot13Client.transformAsync(), { times: 0, ignoreExtraArgs: true });
+			td.verify(log.monitor({
+				message: "form parse error in POST /",
+				details: "'text' form field not found",
+				body: "",
+	     }));
+
 
 			// Your test here.
 		});
