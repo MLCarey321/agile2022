@@ -807,7 +807,7 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * Hints:
 			 *
-			 * 1. You'll need the ability to call postAsync() without awaiting it. Start by renaming simulatePostAsync()
+			 * 1. You'll need the ability to call postAsync() without awaiting it. Start by copying simulatePostAsync()
 			 * to simulatePost() and modifying it to not await the result of postAsync(). Like this:
 			 *      function simulatePost({
 			 *        ...
@@ -820,8 +820,8 @@ describe.only("Home Page Controller", () => {
 			 *        };
 			 *      }
 			 *
-			 * 2. Next, create a new simulatePostAsync() that calls simulatePost():
-			 *      function simulatePostAsync(options) {
+			 * 2. Next, modify simulatePostAsync() to call simulatePost():
+			 *      async function simulatePostAsync(options) {
 			 *        const { responsePromise, ...remainder } = simulatePost(options);
 			 *        return {
 			 *          response: await responsePromise,
@@ -857,7 +857,7 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * 8. When you run the test, they will fail with a timeout. That's because your production code is hanging.
 			 * In your production code, use clock.timeoutAsync to implement a timeout:
-			 *      const { transformPromise } = rot13Client.transform(config.rot13ServicePort, input);
+			 *      const { transformPromise } = this._rot13Client.transform(config.rot13ServicePort, userInput);
 			 *      const output = await this._clock.timeoutAsync(
 			 *        TIMEOUT_IN_MS,      // set this constant to 5000
 			 *        transformPromise,
@@ -866,7 +866,7 @@ describe.only("Home Page Controller", () => {
 			 *      return homePageView.homePage(output);
 			 *
 			 * 9. Now your tests should pass. Next, you can add an assertion for the postAsync() response:
-			 *      assert.deepEqual(response, homePageView.homePage("ROT-13 service timed out");
+			 *      assert.deepEqual(response, homePageView.homePage("ROT-13 service timed out"));
 			 *
 			 * 10. The assertion will fail because the timeout function isn't providing a timeout value. Update it to do so:
 			 *      const output = await this._clock.timeoutAsync(
@@ -882,14 +882,14 @@ describe.only("Home Page Controller", () => {
 			 *        alert: "emergency",
 			 *        message: "ROT-13 service timed out in POST /",
 			 *        timeoutInMs: 5000,
-			 *      };
+			 *      }]);
 			 *
 			 * 12. That assertion will fail because your timeout function isn't writing to the log. Add the logging:
 			 *      const output = await this._clock.timeoutAsync(
 			 *        TIMEOUT_IN_MS,
 			 *        transformPromise,
 			 *        () => {
-			 *          log.emergency({
+			 *          config.log.emergency({
 			 *            message: "ROT-13 service timed out in POST /",
 			 *            timeoutInMs: TIMEOUT_IN_MS,
 			 *          });
@@ -910,12 +910,12 @@ describe.only("Home Page Controller", () => {
 			 * 14. The assertion will fail because the ROT-13 service call isn't being cancelled. You can cancel
 			 * it by using the "cancelFn" field provided by rot13Client.transform(). First, get the variable, then
 			 * call it in your timeout code:
-			 *      const { transformPromise, cancelFn } = rot13Client.transform(config.rot13ServicePort, input);
+			 *      const { transformPromise, cancelFn } = this._rot13Client.transform(config.rot13ServicePort, userInput);
 			 *      const output = await this._clock.timeoutAsync(
 			 *        TIMEOUT_IN_MS,
 			 *        transformPromise,
 			 *        () => {
-			 *          log.emergency({
+			 *          config.log.emergency({
 			 *            message: "ROT-13 service timed out in POST /",
 			 *            timeoutInMs: TIMEOUT_IN_MS,
 			 *          });
