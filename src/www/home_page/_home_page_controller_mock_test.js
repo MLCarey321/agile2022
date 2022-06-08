@@ -174,21 +174,20 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 */
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
-			const rot13Client = td.instance(Rot13Client);
-			const clock = td.instance(Clock);
-			const request = td.instance(HttpRequest);
-			const config = td.instance(WwwConfig);
-			const controller = new HomePageController(rot13Client, clock);
+			const { rot13Client } = await simulatePostAsync({
+				body: "text=hello%20world",
+				rot13Port: 999,
+			});
 
-			config.rot13ServicePort = 999;
-			td.when(request.readBodyAsync()).thenResolve("text=hello%20world");
+			td.verify(rot13Client.transformAsync(999, "hello world"));
+
+
+
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
 
 			// Act: call controller.postAsync() -- don't forget to await
-			await controller.postAsync(request, config);
 
 			// Assert: check that rot13Client.transformAsync() was called
-			td.verify(rot13Client.transformAsync(999, "hello world"));
 		});
 
 
@@ -357,23 +356,18 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 */
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
-			const rot13Client = td.instance(Rot13Client);
-			const clock = td.instance(Clock);
-			const request = td.instance(HttpRequest);
-			const config = td.instance(WwwConfig);
-			const controller = new HomePageController(rot13Client, clock);
-
-			config.rot13ServicePort = 42;
-			td.when(request.readBodyAsync()).thenResolve("text=irrelevant_text");
-			td.when(rot13Client.transformAsync(42, "irrelevant_text")).thenResolve("my_response");
-
-			// Act: call controller.postAsync() -- don't forget to await
-			const response = await controller.postAsync(request, config);
-
-			// Assert: check that the result of postAsync() matches homePageView.homePage(expectedText)
+			const { response } = await simulatePostAsync({
+				rot13Response: "my_response",
+			});
 			const expected = homePageView.homePage("my_response");
 			assert.deepEqual(response, expected);
+
+
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+
+			// Act: call controller.postAsync() -- don't forget to await
+
+			// Assert: check that the result of postAsync() matches homePageView.homePage(expectedText)
 		});
 
 	});
@@ -406,21 +400,18 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 * 3. The test should pass without needing any changes to the production code.
 			 */
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
-			const rot13Client = td.instance(Rot13Client);
-			const clock = td.instance(Clock);
-			const request = td.instance(HttpRequest);
-			const config = td.instance(WwwConfig);
-			const controller = new HomePageController(rot13Client, clock);
+			const { rot13Client } = await simulatePostAsync({
+				rot13Port: 999,
+				body: "unrelated=one&text=two&also_unrelated=three"
+			});
+			td.verify(rot13Client.transformAsync(999, "two"));
 
-			config.rot13ServicePort = 999;
-			td.when(request.readBodyAsync()).thenResolve("unrelated=one&text=two&also_unrelated=three");
+
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
 
 			// Act: call controller.postAsync() -- don't forget to await
-			await controller.postAsync(request, config);
 
 			// Assert: check that rot13Client.transformAsync() was called
-			td.verify(rot13Client.transformAsync(999, "two"));
 		});
 
 		it("logs warning when form field not found (and treats request like GET)", async () => {
@@ -513,18 +504,11 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *      });
 			 *
 			 */
-			const rot13Client = td.instance(Rot13Client);
-			const clock = td.instance(Clock);
-			const request = td.instance(HttpRequest);
-			const config = td.instance(WwwConfig);
-			const controller = new HomePageController(rot13Client, clock);
 
-			const log = td.object(new Log());
-			config.log = log;
+			const { response, rot13Client, log } = await simulatePostAsync({
+				body: ""
+			});
 
-			td.when(request.readBodyAsync()).thenResolve("");
-
-			const response = await controller.postAsync(request, config);
 			assert.deepEqual(response, homePageView.homePage());
 			td.verify(rot13Client.transformAsync(), { times: 0, ignoreExtraArgs: true });
 			td.verify(log.monitor({
@@ -570,73 +554,104 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *        return { result: "bar" };
 			 *      }
 			 *      console.log(result);              // prints "bar"
+ 			 *
+ 			 * 2. Object shorthand:
+ 			 * JavaScript objects, such as "{ rot13Client: myClient }" consist of multiple fields, each separated by a comma.
+ 			 * Each field consists of a name ("rot13Client") and a value (the "myClient" variable). However, if the name of
+ 			 * the variable is the same as the name of the field, you can eliminate it. So if you have a field named
+ 			 * "rot13Client" with a variable named "rot13Client", you can just say "{ rot13Client }".
+ 			 *
+ 			 * 3. Optional fields and parameters:
+ 			 * It's common for JavaScript functions to take an object as a parameter. The function will expect the object
+ 			 * to have certain fields. Often, those fields are optional. If no value is provided, the function will fill
+ 			 * in a default. In fact, the whole parameter can be optional. That's how HomePageController.createNull() works.
+ 			 * If you don't provide an object with a "rot13Client" field, createNull() will fill one in for you. You can
+ 			 * see how this works in the declaration of createNull() in home_page_controller.js (around lines 19-22).
 			 *
-			 * 2. String interpolation
+			 * 4. String interpolation
 			 * You can interpolate expressions into strings by using backticks to define the string and ${...} for the
 			 * variable or other expression. For example, the following code will print "foobar":
 			 *      const foo = "foo";
 			 *      console.log(`${foo}bar`);         // prints "foobar"
 			 *
-			 * 3. "Unexpected token" lint error
+			 * 5. "Unexpected token" lint error
 			 * This error occurs when you forget to put the "async" keyword on a function that uses the "await" keyword.
 			 *
 			 *
 			 * Hints:
 			 *
-			 * 1. I find that helper methods are more useful than beforeEach() methods. My approach was to create a
-			 * postAsync() method that took optional parameters and returned an object with multiple fields. Like this:
-			 *      function simulatePostAsync({
+			 * 1. Your first task is to refactor to eliminate the duplication in the tests. Although there are many
+			 * ways to do this, I find that helper methods are more useful than beforeEach() methods. My approach was
+			 * to create a simulatePostAsync() method that took optional parameters and returned an object with multiple
+			 * fields. Like this:
+			 *      async function simulatePostAsync({
 			 *        body = `text=${IRRELEVANT_INPUT}`,        // create an "IRRELEVANT_INPUT" constant
-			 *        rot13Client = Rot13Client.createNull(),
 			 *        rot13Port = IRRELEVANT_PORT,              // create an "IRRELEVANT_PORT" constant
+			 *        rot13Input = IRRELEVANT_INPUT,
+			 *        rot13Response = "irrelevant ROT-13 response",
 			 *      } = {}) {
-			 *        const rot13Requests = rot13Client.trackRequests();
-			 *        const request = HttpRequest.createNull({ body });
-			 *        const log = Log.createNull();
-			 *        const logOutput = log.trackOutput();
-			 *        const config = WwwConfig.createNull({ rot13ServicePort: rot13Port, log });
+			 *        const rot13Client = td.instance(Rot13Client);
+			 *        const clock = td.instance(Clock);
+			 *        const request = td.instance(HttpRequest);
+			 *        const config = td.instance(WwwConfig);
+			 *        const log = td.object(new Log());
+			 *        const controller = new HomePageController(rot13Client, clock);
 			 *
-			 *        const controller = HomePageController.createNull({ rot13Client });
+			 *        config.rot13ServicePort = rot13Port;
+			 *        config.log = log;
+			 *        td.when(request.readBodyAsync()).thenResolve(body);
+			 *        td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenResolve(rot13Response);
+			 *
 			 *        const response = await controller.postAsync(request, config);
 			 *
 			 *        return {
 			 *          response,
-			 *          rot13Requests,
-			 *          logOutput,
+			 *          rot13Client,
+			 *          log,
 			 *        };
 			 *      }
 			 *
 			 * 2. Once simulatePostAsync() exists, you can call it from your existing tests. For example, the test
 			 * for challenge #2 looks like this:
 			 *      it("POST asks ROT-13 service to transform text", async () => {
-			 *        const { rot13Requests } = await simulatePostAsync({
+			 *        const { rot13Client } = await simulatePostAsync({
 			 *          body: "text=hello%20world",
 			 *          rot13Port: 999,
 			 *        });
 			 *
-			 *        assert.deepEqual(rot13Requests, [{
-			 *          port: 999,
-			 *          text: "hello world",
-			 *        }]);
+			 *        td.verify(rot13Client.transformAsync(999, "hello world"));
 			 *      });
 			 *
-			 * 3. Once the code has been factored out, implementing this test is just a matter of using the new
+			 * 3. Refactor the remaining tests, other than challenge #1, to use simulatePostAsync().
+			 *
+			 * 4. Once the code has been factored out, implementing this test is just a matter of using the new
 			 * abstraction and making the appropriate assertions. Like this:
-			 *      const { response, rot13Requests, logOutput } = await simulatePostAsync({
+			 *      const { response, rot13Client, log } = await simulatePostAsync({
 			 *        body: "text=one&text=two",
 			 *      });
 			 *
 			 *      assert.deepEqual(response, homePageView.homePage());
-			 *      assert.deepEqual(rot13Requests, []);
-			 *      assert.deepEqual(logOutput, [{
-			 *        alert: "monitor",
+			 *      td.verify(rot13Client.transformAsync(), { times: 0, ignoreExtraArgs: true });
+			 *      td.verify(log.monitor({
 			 *        message: "form parse error in POST /",
 			 *        details: "multiple 'text' form fields found",
 			 *        body: "text=one&text=two",
-			 *      });
+			 *      }));
 			 *
-			 * 4. To make the test pass, add another guard clause to the production code.
+			 * 5. To make the test pass, add another guard clause to the production code.
 			 */
+
+			const { response, rot13Client, log } = await simulatePostAsync({
+				body: "text=one&text=two",
+			});
+
+			assert.deepEqual(response, homePageView.homePage());
+			td.verify(rot13Client.transformAsync(), { times: 0, ignoreExtraArgs: true });
+			td.verify(log.monitor({
+				message: "form parse error in POST /",
+				details: "multiple 'text' form fields found",
+				body: "text=one&text=two",
+			}));
 
 			// Your test here.
 		});
@@ -902,21 +917,32 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 });
 
 
+async function simulatePostAsync({
+	body = `text=${IRRELEVANT_INPUT}`,        // create an "IRRELEVANT_INPUT" constant
+	rot13Port = IRRELEVANT_PORT,              // create an "IRRELEVANT_PORT" constant
+	rot13Input = IRRELEVANT_INPUT,
+	rot13Response = "irrelevant ROT-13 response",
+} = {}) {
+	const rot13Client = td.instance(Rot13Client);
+	const clock = td.instance(Clock);
+	const request = td.instance(HttpRequest);
+	const config = td.instance(WwwConfig);
+	const log = td.object(new Log());
+	const controller = new HomePageController(rot13Client, clock);
 
-/*
- 			 * JavaScript syntax notes:
- 			 *
- 			 * 1. Object shorthand:
- 			 * JavaScript objects, such as "{ rot13Client: myClient }" consist of multiple fields, each separated by a comma.
- 			 * Each field consists of a name ("rot13Client") and a value (the "myClient" variable). However, if the name of
- 			 * the variable is the same as the name of the field, you can eliminate it. So if you have a field named
- 			 * "rot13Client" with a variable named "rot13Client", you can just say "{ rot13Client }".
- 			 *
- 			 * 2. Optional fields and parameters:
- 			 * It's common for JavaScript functions to take an object as a parameter. The function will expect the object
- 			 * to have certain fields. Often, those fields are optional. If no value is provided, the function will fill
- 			 * in a default. In fact, the whole parameter can be optional. That's how HomePageController.createNull() works.
- 			 * If you don't provide an object with a "rot13Client" field, createNull() will fill one in for you. You can
- 			 * see how this works in the declaration of createNull() in home_page_controller.js (around lines 19-22).
- 			 *
- */
+	config.rot13ServicePort = rot13Port;
+	config.log = log;
+	td.when(request.readBodyAsync()).thenResolve(body);
+	td.when(rot13Client.transformAsync(rot13Port, rot13Input)).thenResolve(rot13Response);
+
+	const response = await controller.postAsync(request, config);
+
+	return {
+		response,
+		rot13Client,
+		log,
+	};
+}
+
+const IRRELEVANT_INPUT = "irrelevant_input";
+const IRRELEVANT_PORT = 42;

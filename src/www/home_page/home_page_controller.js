@@ -59,6 +59,14 @@ module.exports = class HomePageController {
 			});
 			return homePageView.homePage();
 		}
+		else if (textFields.length !== 1) {
+			config.log.monitor({
+				message: "form parse error in POST /",
+				details: "multiple 'text' form fields found",
+				body,
+			});
+			return homePageView.homePage();
+		}
 
 		const userInput = textFields[0];
 		const output = await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
