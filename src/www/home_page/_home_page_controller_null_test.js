@@ -574,8 +574,10 @@ describe.only("Home Page Controller", () => {
 			 *
 			 * Hints:
 			 *
-			 * 1. I find that helper methods are more useful than beforeEach() methods. My approach was to create a
-			 * postAsync() method that took optional parameters and returned an object with multiple fields. Like this:
+			 * 1. Your first task is to refactor to eliminate the duplication in the tests. Although there are many
+			 * ways to do this, I find that helper methods are more useful than beforeEach() methods. My approach was
+			 * to create a simulatePostAsync() method that took optional parameters and returned an object with multiple
+			 * fields. Like this:
 			 *      function simulatePostAsync({
 			 *        body = `text=${IRRELEVANT_INPUT}`,        // create an "IRRELEVANT_INPUT" constant
 			 *        rot13Client = Rot13Client.createNull(),
