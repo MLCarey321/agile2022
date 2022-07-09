@@ -35,11 +35,11 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 * 1. const mock = td.instance(Class)
 			 *      Create a "mock" instance of a class. E.g., "const rot13Client = td.instance(Rot13Client)".
 			 *
-			 * 2. const controller = HomePageController.createNull()
-			 *      Create a HomePageController.
+			 * 2. const controller = new HomePageController(rot13Client, clock)
+			 *      Create a HomePageController. It takes an instance of Rot13Client and an instance of Clock.
 			 *
 			 * 3. const response = await controller.getAsync(request, config)
-			 *      Handle the GET request.
+			 *      Handle the GET request. It takes an instance of HttpRequest and an instance of WwwConfig.
 			 *
 			 * 4. const response = homePageView.homePage()
 			 *      Render the home page.
@@ -97,7 +97,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 * getAsync() isn't returning a value.
 			 *
 			 * 7. Make the test pass by having getAsync() return the home page:
-			 *      return homePageView.homePage()
+			 *      return homePageView.homePage();
 			 */
 
 			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
@@ -114,9 +114,8 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 * This is a lot more challenging! You need to make HomePageController call the ROT-13 service when it
 			 * receives a POST request. To make this easier, the challenge is broken up into three parts.
 			 *
-			 * For part (a), make the HomePageController call the ROT-13 service when it receives a POST request.
-			 * Use a hard-coded port and text. You don't need to worry about the response for this challenge. Don't
-			 * worry about errors or edge cases either. Specifically:
+			 * For part (a), call the ROT-13 service with a hard-coded port and text. You don't need to worry about
+			 * the response for this part. Don't worry about errors or edge cases either. Specifically:
 			 *
 			 *    1. In your test, call HomePageController.postAsync().
 			 *    2. Assert that postAsync called the ROT-13 service with hard-coded values.
@@ -147,7 +146,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * 2. To simulate a POST request, call controller.postAsync(). It expects HttpRequest and WwwConfig parameters,
 			 * just like getAsync() did in Challenge #1. This time, though, you can ignore the response, because your
-			 * assertion is looking at rot13Client instead.
+			 * assertion will look at rot13Client instead.
 			 *      await controller.postAsync(request, config);
 			 *
 			 * 3. Check that rot13Client was called by postAsync. To do that, use td.verify():
@@ -189,17 +188,17 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 		 * 2. config.rot13ServicePort = 999;
 		 *    Set the service port. This only works with mocked instances of WwwConfig, because the real WwwConfig
 		 *    uses an accessor ("get" function) and doesn't provide a mutator ("set" function). Normally, to make
-		 *    a mocked function return a specific value, use'd use td.when(). But testdouble doesn't support mocking
+		 *    a mocked function return a specific value, we'd use td.when(). But testdouble doesn't support mocking
 		 *    out accessors, as far as I can tell, so we just set the value directly.
 		 *
 		 *
 		 * Hints:
 		 *
 		 * 1. Your production code will get the port from WwwConfig, so you'll need to set the port on the config.
-		 * Use a different port to prove that your test is working:
+		 * (Use a different port to prove that your test is working.) Put it at the end of the "arrange" block:
 		 *      config.rot13ServicePort = 999;
 		 *
-		 * 2. Remember to update your assertion to use the new port:
+		 * 2. Update your assertion to use the new port:
 		 *      td.verify(rot13Client.transformAsync(999, "some text"));
 		 *
 		 * 3. When you run the test, it will fail because it was called with 123, but it expected port 999. This
@@ -220,7 +219,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 		 *       form data that matches what a browser will send.
 		 *    2. Change the test's assertion to "hello world".
 		 *    3. Change HomePageController.postAsync() to parse the "text" field from the request body and send
-		 *       "hello world" to the ROT-13 service.
+		 *       it to the ROT-13 service.
 		 *
 		 *
 		 * Useful methods:
@@ -245,7 +244,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 		 * Hints:
 		 *
 		 * 1. Your production code will read the request body from HttpRequest, so you'll need to configure your
-		 * mock request to return the body. Like this:
+		 * mock request to return the body. Put it at the end of the "arrange" block:
 		 *      td.when(request.readBodyAsync()).thenResolve("text=hello%20world");
 		 *
 		 * 2. Update your assertion to use the new text field:
@@ -273,9 +272,9 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 * In the previous challenge, you made the code call the ROT-13 server. In this challenge, you need to make it
 			 * return the correct home page response. Specifically, the controller should return a web page with the
-			 * translated ROT-13 string in the text field.
+			 * translated ROT-13 string in the text field. Don't worry about server errors or edge cases for this challenge.
 			 *
-			 * Don't worry about server errors or edge cases for this challenge. Specifically:
+			 * Specifically:
 			 *
 			 *    1. In your test, configure the ROT-13 client to return "my_response".
 			 *    2. Assert that HomePageController.postAsync() returns homePageView.homePage("my_response").
@@ -517,17 +516,22 @@ describe.only("Home Page Controller (testdouble tests)", () => {
  			 * 3. Optional fields and parameters:
  			 * It's common for JavaScript functions to take an object as a parameter. The function will expect the object
  			 * to have certain fields. Often, those fields are optional. If no value is provided, the function will fill
- 			 * in a default. In fact, the whole parameter can be optional. That's how HomePageController.createNull() works.
- 			 * If you don't provide an object with a "rot13Client" field, createNull() will fill one in for you. You can
- 			 * see how this works in the declaration of createNull() in home_page_controller.js (around lines 19-22).
+ 			 * in a default. In fact, the whole parameter can be optional. For example, the following code will print
+ 			 * "foo" twice, then "bar".
+ 			 *      static myFunction({ text = "foo" } = {}) {
+ 			 *        console.log(text);
+ 			 *      }
+ 			 *      myFunction();                     // prints "foo"
+ 			 *      myFunction({});                   // prints "foo"
+ 			 *      myFunction({ text: "bar" });      // prints "bar"
 			 *
-			 * 4. String interpolation
+			 * 4. String interpolation:
 			 * You can interpolate expressions into strings by using backticks to define the string and ${...} for the
 			 * variable or other expression. For example, the following code will print "foobar":
 			 *      const foo = "foo";
 			 *      console.log(`${foo}bar`);         // prints "foobar"
 			 *
-			 * 5. "Unexpected token" lint error
+			 * 5. "Unexpected token" lint error:
 			 * This error occurs when you forget to put the "async" keyword on a function that uses the "await" keyword.
 			 *
 			 *
