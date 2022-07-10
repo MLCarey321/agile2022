@@ -143,18 +143,22 @@ describe.only("Home Page Controller", () => {
 
 			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
 			// don't forget to pass Rot13Client into HomePageController
-			const rot13Client = td.instance(Rot13Client);
+			const rot13Client = Rot13Client.createNull();
 			const clock = Clock.createNull();
 			const request = HttpRequest.createNull({ body: "text=hello%20world" });
 			const config = WwwConfig.createNull({ rot13ServicePort: 999});
 			const controller = new HomePageController(rot13Client, clock);
 
+			const rot13Requests = rot13Client.trackRequests();
+
 			// Act: call controller.postAsync() -- don't forget to await
 			await controller.postAsync(request, config);
 
 			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
-			td.verify(rot13Client.transformAsync(999, "hello world"));
-
+			assert.deepEqual(rot13Requests, [{
+				port: 999,           // The port of the ROT-13 service
+				text: "hello world",   // The text sent to the service
+      }]);
 
 			// // Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
 			// // don't forget to pass Rot13Client into HomePageController
@@ -175,91 +179,51 @@ describe.only("Home Page Controller", () => {
 			// td.verify(rot13Client.transformAsync(999, "hello world"));
 		});
 
-		/* CHALLENGE #2b: Dynamic port
+		/* CHALLENGE #2b: Tracking requests
 		 *
-		 * For this challenge, modify the test and production code created in Challenge #2a. Change it to use the
-		 * ROT-13 service port provided in WwwConfig rather than hard-coding the value.
+		 * For this challenge, finish, converting the test in Challenge #2a. Specifically:
 		 *
-		 * Useful methods:
+		 *    1. Convert the "td.instance(rot13Client)" line to use "Rot13Client.createNull()"
+		 *    2. Replace the "td.verify()" line with a normal assertion.
 		 *
-		 * 1. const config = WwwConfig.createNull({ rot13ServicePort }) - create a WwwConfig with the provided ROT-13
-		 *      service port. Note that the parameter is an object with an optional field named "rot13ServicePort".
-		 * 2. const port = config.rot13ServicePort - get the ROT-13 service port.
-			 * 3. const rot13Requests = rot13Client.trackRequests() - track requests made by rot13Client. This returns a
-			 *      reference to an empty array on the heap. Every time rot13Client makes a request to the ROT-13 service,
-			 *      an object describing the request is appended to the array. The object looks like this:
-			 *          {
-			 *            port: 123,          // The port of the ROT-13 service
-			 *            text: "some text"   // The text sent to the service
-			 *          }
-		 *
-		 * Hints:
-		 *
-		 * 1. Your production code will get the port from WwwConfig, so you'll need to update the "config" line of
-		 * your test to provide the port. Use a different port to prove that your test is working:
-		 *    const config = WwwConfig.createNull({ rot13ServicePort: 999 });
-		 *
-		 * 2. Remember to update your assertion to use the new port:
-		 *    assert.deepEqual(rot13Requests, [{
-		 *      port: 999,           // The port of the ROT-13 service
-		 *      text: "some text",   // The text sent to the service
-		 *    }]);
-		 *
-		 * 3. When you run the test, it will fail because it expected port 999, but got port 123. This means your
-		 * production code isn't using the port defined in the config.
-		 *
-		 * 4. Change your production code to get the port out of the config object. Like this:
-		 *    await this._rot13Client.transformAsync(config.rot13ServicePort, "some text");
-		 *
-		 */
-
-		/* CHALLENGE #2c: Parsing the request body
-		 *
-		 * Modify the test and production code created in Challenge #2a again. This time, change it to parse the request
-		 * body rather than hard-coding the text. Use this request body:
-		 *
-		 *    const body = "text=hello%20world";
-		 *
-		 * This is URL-encoded form data that matches what a browser will send. Given this body, the controller should
-		 * parse out the "text" field and send "hello world" to the ROT-13 service.
 		 *
 		 * Useful methods:
 		 *
-		 * 1. const request = HttpRequest.createNull({ body }) - create a request with the provided body. Note that
-		 *      the parameter is an object with an optional field named "body". (To inline the body, use
-		 *      "HttpRequest.createNull({ body: "text=hello%20world" })".)
-		 * 2. const body = await request.readBodyAsync() - read the request body.
-		 * 3. const formData = new URLSearchParams(body) - parse the request body. (URLSearchParams is part of the
-		 *      standard library.)
-		 * 4. const textFields = formData.getAll("text") - get an array containing the values of all "text" fields. The
-		 *      array will be empty if there are no "text" fields.
+		 * 1. const rot13Requests = rot13Client.trackRequests()
+		 *      Track service requests made by rot13Client. This returns a reference to an empty array on the heap.
+		 *      Every time rot13Client makes a request to the ROT-13 service, an object describing the request is
+		 *      appended to the array. The object looks like this:
+		 *          {
+		 *            port: 123,          // The port of the ROT-13 service
+		 *            text: "some text"   // The text sent to the service
+		 *          }
+		 *
 		 *
 		 * Hints:
 		 *
-		 * 1. Your production code will read the request body from HttpRequest, so you need to update the "request" line
-		 * of your test to provide the body. Like this:
-		 *    const body = "text=hello%20world";
-		 *    const request = HttpRequest.createNull({ body });
+		 * 1. Start by replacing the "rot13Client" line:
+		 *    const rot13Client = Rot13Client.createNull();
 		 *
-		 * 2. Update your assertion to use the new text field:
+		 * 2. The tests will fail with a "no test double invocation detected" error. This is because rot13Client isn't
+		 * a test double any more. Comment out the "td.verify()" line as a stopgap to get the tests working again.
+		 *
+		 * 3. The "td.verify()" line checked that rot13Client.transformAsync() was called. This method made the call
+		 * to the ROT-13 service. With nullable infrastructure, rather than checking if a method was called, you'll
+		 * check which requests were made. To do that, you'll need to track rot13Client's requests. You can do that
+		 * by calling rot13Client.trackRequests(). It returns an array that is updated every time a new request is made.
+		 * Note that you have to call trackRequests() BEFORE making the call to postAsync().
+		 *    const rot13Requests = rot13Client.trackRequests();
+		 *
+		 * 4. Compare the rot13Requests array (from rot13Client.trackRequests()) to your expected requests using
+		 * assert.deepEqual(). It will contain an array of objects. Each object represents a single request. Since
+		 * you're only expecting the production code to make one request, you can expect an array with one object.
+		 * Like this:
 		 *    assert.deepEqual(rot13Requests, [{
 		 *      port: 999,           // The port of the ROT-13 service
-		 *      text: "hello world", // The text sent to the service
+		 *      text: "hello world",   // The text sent to the service
 		 *    }]);
 		 *
-		 * 3. When you run the test, it will fail because it expected "hello world," but got "some text". This means
-		 * your production code isn't reading the request body.
-		 *
-		 * 4. Change your production code to read the request body:
-		 *    const body = await request.readBodyAsync();
-		 *
-		 * 5. Parse the request body:
-		 *    const formData = new URLSearchParams(requestBody);
-		 *    const textFields = formData.getAll("text");
-		 *    const userInput = textFields[0];
-		 *
-		 * 6. Modify the ROT-13 request to use the request body:
-		 *    await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
+		 * 5. The tests should pass. Now you can delete the commented out td.verify() line. You've finished the challenge.
 		 *
 		 */
 
