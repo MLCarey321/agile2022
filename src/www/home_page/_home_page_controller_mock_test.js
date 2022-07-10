@@ -15,7 +15,7 @@ const Clock = require("infrastructure/clock");
 const IRRELEVANT_PORT = 42;
 const IRRELEVANT_INPUT = "irrelevant_input";
 
-describe("Home Page Controller", () => {
+describe("Home Page Controller (testdouble tests)", () => {
 
 	afterEach(() => {
 		td.reset();
