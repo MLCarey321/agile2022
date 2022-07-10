@@ -274,36 +274,46 @@ describe.only("Home Page Controller", () => {
 	describe("parse edge cases", () => {
 
 		it("finds correct form field when there are unrelated fields", async () => {
-			/* CHALLENGE #4: A minor tweak
+			/* CHALLENGE #4: Building nullable tests
 			 *
-			 * This is the same kind of test as challenge #2c. Confirm that this request body works:
+			 * Write a nullable infrastructure test from scratch. Your job is to check that the parsing code works correctly
+			 * with a complicated request body. (It does, so all you need to do is write the test.) Specifically:
 			 *
-			 *    const body = "unrelated=one&text=two&also_unrelated=three";
+			 *    1. In your test, configure the request body to be "unrelated=one&text=two&also_unrelated=three".
+			 *    2. Configure the ROT-13 port to be 999.
+			 *    3. Assert that the ROT-13 service is called with port 999 and the text "two".
 			 *
-			 * The test will probably pass the first time, without requiring any changes to the production code.
 			 *
 			 * Hints:
 			 *
-			 * 1. You can copy and paste the test code from challenge #2. Just change the request body:
-			 *    const body = "unrelated=one&text=two&also_unrelated=three";
+			 * 1. Start by setting up your null instances. Be sure to pass the correct body into HttpRequest.createNull()
+			 * and the correct port into WwwConfig.createNull():
+			 * 			const rot13Client = Rot13Client.createNull();
+			 *      const clock = Clock.createNull();
+			 *      const request = HttpRequest.createNull({ body: "unrelated=one&text=two&also_unrelated=three" });
+			 *      const config = WwwConfig.createNull({ rot13ServicePort: 999 });
+			 *      const controller = new HomePageController(rot13Client, clock);
 			 *
-			 * 2. Remember to change the assertion:
-			 *    assert.deepEqual(rot13Requests, [{
-			 *      port: 999,           // The port of the ROT-13 service
-			 *      text: "two",         // The text sent to the service
-			 *    }]);
+			 * 2. Your assertion will check that the ROT-13 service was called correctly, so you'll need to track the
+			 * ROT-13 service requests:
+			 *      const rot13Requests = rot13Client.trackRequests();
 			 *
-			 * 3. Start thinking about how to factor out duplication, but don't implement it yet. Instead of using
-			 * beforeEach(), consider a helper method instead, such as "postAsync()". But don't refactor just yet.
+			 * 2. Call postAsync():
+			 *      await controller.postAsync(request, config);
+			 *
+			 * 3. Assert that the correct ROT-13 service call was made:
+			 * 			assert.deepEqual(rot13Requests, [{
+			 *        port: 999,
+			 *        text: "two",
+			 *      }]);
+			 *
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
-			// don't forget to pass Rot13Client into HomePageController
+			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests()
 
 			// Act: call controller.postAsync() -- don't forget to await
 
 			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
-			// If you don't see any requests, make sure you've passed rot13Client into HomePageController.createNull()
 		});
 
 		it("logs warning when form field not found (and treats request like GET)", async () => {
