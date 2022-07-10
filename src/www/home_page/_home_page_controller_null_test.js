@@ -319,25 +319,44 @@ describe.only("Home Page Controller", () => {
 		it("logs warning when form field not found (and treats request like GET)", async () => {
 			/* CHALLENGE #5: Logging
 			 *
-			 * This is also similar to challenge #2, except now you need to handle a missing form field and log a warning.
-			 * Use an empty request body in your test:
+			 * This test will be similar to the previous challenge, except now you need to handle a missing form field and
+			 * log a warning. You'll also need to write the production code needed to make this test pass.
 			 *
-			 *    const body = "";
+			 *    1. In your test, configure the request body to be "" (an empty string).
+			 *    2. Assert that HomePageController.postAsync() returns homePageView.homePage().
+			 *    3. Assert that the ROT-13 service was not called.
+			 *    4. Assert that postAsync() writes the following log message:
+			 *          {
+			 *            alert: "monitor",
+			 *            message: "form parse error in POST /",
+			 *            details: "'text' form field not found",
+			 *            body: "",
+			 *          }
+			 *    5. As you work, write the production code needed for these assertions to pass.
 			 *
-			 * Confirm that the controller outputs a log entry with the "monitor" alert level and returns the home page.
 			 *
 			 * Useful methods:
 			 *
-			 * 1. const log = Log.createNull() - create a Log (an object that can write to the log).
-			 * 2. const config = WwwConfig.createNull({ log }) - create a WwwConfig with the provided log. Note that the
-			 *      parameter is an object with an optional field named "log".
-			 * 3. const logOutput = log.trackOutput() - track logging. Similar to rot13Client.trackRequests(), this returns
-			 *      a reference to an empty array on the heap. Every time a new log entry is written, an object is appended
-			 *      to the array. The object has the log's alert level (in the "alert" field) and any other fields that
-			 *      are written in that log entry. Fields containing Error objects are converted to strings.
-			 * 4. const log = config.log - get the logger.
-			 * 5. log.monitor(data) - write data to the log with the "monitor" alert level. "data" must be an object, and
+			 * 1. const log = Log.createNull()
+			 *      Create a Log (an object that can write to the log).
+			 *
+			 * 2. const config = WwwConfig.createNull({ log })
+			 *      Create a WwwConfig with the provided log. Note that the parameter is an object with an optional
+			 *      field named "log".
+			 *
+			 * 3. const logOutput = log.trackOutput()
+			 *      Track logging. Similar to rot13Client.trackRequests(), this returns a reference to an empty array
+			 *      on the heap. Every time a new log entry is written, an object is appended to the array. The object
+			 *      has the log's alert level (in the "alert" field) and any other fields that are written in that log
+			 *      entry. Fields containing Error objects are converted to strings.
+			 *
+			 * 4. const log = config.log
+			 *      Get the logger.
+			 *
+			 * 5. log.monitor(data)
+			 *      Write data to the log with the "monitor" alert level. "data" must be an object, and
 			 *     that object may contain any fields you like.
+			 *
 			 *
 			 * Hints:
 			 *
@@ -350,8 +369,10 @@ describe.only("Home Page Controller", () => {
 			 * 2. Your test needs to specify an empty request body:
 			 *    const request = HttpRequest.createNull({ body: "" });
 			 *
-			 * 3. You also need a HomePageController, but you can use its default Rot13Client rather creating your own:
-			 *    const controller = HomePageController.createNull();
+			 * 3. You also need a HomePageController, so you'll need a Rot13Client and a Clock:
+			 *    const rot13Client = Rot13Client.createNull();
+			 *    const clock = Clock.createNull();
+			 *    const controller = new HomePageController(rot13Client, clock);
 			 *
 			 * 4. You'll need to call postAsync() and confirm that it returns the correct response:
 			 *    const response = await controller.postAsync(request, config);
