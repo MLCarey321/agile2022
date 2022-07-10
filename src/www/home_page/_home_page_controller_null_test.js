@@ -53,7 +53,7 @@ describe.only("Home Page Controller", () => {
 			 *
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, and WwwConfig
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
 			const rot13Client = td.instance(Rot13Client);
 			const clock = td.instance(Clock);
 			const request = td.instance(HttpRequest);
@@ -80,7 +80,7 @@ describe.only("Home Page Controller", () => {
 			 * Specifically:
 			 *
 			 *    1. Replace calls to td.instance() with calls to createNull(), EXCEPT for the rot13Client.
-			 *    2. Remove the code under the "Configuration code" comment by configuring the null instances directly.
+			 *    2. Replace the code under the "Configuration code" comment with configuring the null instances directly.
 			 *    3. DO NOT change the assertion code at this time.
 			 *
 			 *
@@ -141,47 +141,27 @@ describe.only("Home Page Controller", () => {
 			 *
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
-			// don't forget to pass Rot13Client into HomePageController
-			const rot13Client = Rot13Client.createNull();
-			const clock = Clock.createNull();
-			const request = HttpRequest.createNull({ body: "text=hello%20world" });
-			const config = WwwConfig.createNull({ rot13ServicePort: 999});
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			const rot13Client = td.instance(Rot13Client);
+			const clock = td.instance(Clock);
+			const request = td.instance(HttpRequest);
+			const config = td.instance(WwwConfig);
 			const controller = new HomePageController(rot13Client, clock);
 
-			const rot13Requests = rot13Client.trackRequests();
+			// Configuration code. Remove these lines by configuring the null instances instead.
+			config.rot13ServicePort = 999;
+			td.when(request.readBodyAsync()).thenResolve("text=hello%20world");
 
 			// Act: call controller.postAsync() -- don't forget to await
 			await controller.postAsync(request, config);
 
 			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
-			assert.deepEqual(rot13Requests, [{
-				port: 999,           // The port of the ROT-13 service
-				text: "hello world",   // The text sent to the service
-      }]);
-
-			// // Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests() --
-			// // don't forget to pass Rot13Client into HomePageController
-			// const rot13Client = td.instance(Rot13Client);
-			// const clock = td.instance(Clock);
-			// const request = td.instance(HttpRequest);
-			// const config = td.instance(WwwConfig);
-			// const controller = new HomePageController(rot13Client, clock);
-			//
-			// // Configuration code. Remove these lines by configuring the null instances instead.
-			// config.rot13ServicePort = 999;
-			// td.when(request.readBodyAsync()).thenResolve("text=hello%20world");
-			//
-			// // Act: call controller.postAsync() -- don't forget to await
-			// await controller.postAsync(request, config);
-			//
-			// // Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
-			// td.verify(rot13Client.transformAsync(999, "hello world"));
+			td.verify(rot13Client.transformAsync(999, "hello world"));
 		});
 
 		/* CHALLENGE #2b: Tracking requests
 		 *
-		 * For this challenge, finish, converting the test in Challenge #2a. Specifically:
+		 * For this challenge, finish converting the test in Challenge #2a. Specifically:
 		 *
 		 *    1. Convert the "td.instance(rot13Client)" line to use "Rot13Client.createNull()"
 		 *    2. Replace the "td.verify()" line with a normal assertion.
@@ -230,70 +210,62 @@ describe.only("Home Page Controller", () => {
 		it("POST renders result of ROT-13 service call", async() => {
 			/* CHALLENGE #3: Configuring responses
 			 *
-			 * In the previous challenge, you made the code call the ROT-13 server. In this challenge, you need to make it
-			 * return the correct home page response. Specifically, the controller should return a web page with the
-			 * translated ROT-13 string in the text field.
+			 * This test checks that the HomePageController returns the correct home page after calling the ROT-13 service.
+			 * Convert it to use mocks. Specifically:
 			 *
-			 * Don't worry about server errors or edge cases for this challenge.
+			 *    1. Replace calls to td.instance() with calls to createNull().
+			 *    2. Replace the code under the "Configuration code" comment with configuring the null instances directly.
 			 *
-			 * When this challenge is complete, the code should work end to end. Check it manually as follows:
-			 *    1. Run `.\serve_dev.cmd 5010 5011` (Windows) or `./serve_dev.sh 5010 5011` (Mac/Linux) on the command line
-			 *    2. Access the page in a web browser: http://localhost:5010
 			 *
 			 * Useful methods:
 			 *
-			 * 1. const rot13Client = Rot13Client.createNull([{ response: "my_response" }]) - create a Rot13Client that
-			 *      responds with "my_response" the first time it's called. Note that the parameter is an array of objects.
-			 *      (If you wanted to control additional responses, you would add more objects to the array.)
-			 * 2. const response = homePageView.homePage("my_text") - render the home page with "my_text" in the text field.
+			 * 1. const rot13Client = Rot13Client.createNull([{ response: "my_response" }])
+			 *      Create a Rot13Client that responds with "my_response" the first time it's called. Note that
+			 *      the parameter is an array of objects. (If you wanted to control additional responses, you would
+			 *      add more objects to the array.)
+			 *
 			 *
 			 * Hints:
 			 *
-			 * 1. Just like in the last challenge, you'll need to create a Rot13Client in your test. But this time, you'll
-			 * need to control what data it returns. You can do that by providing an array of objects, like this:
-			 *    const rot13Client = Rot13Client.createNull([{ response: "my_response" }]);
+			 * 1. As before, start converting the "td.instance()" calls, one line at a time. Start with rot13Client.
+			 * Provide the correct response and delete the "td.when(rot13Client.transformAsync(...))" line.
+			 *      const rot13Client = Rot13Client.createNull({ response: "my_response" );
+			 *      // DELETE: td.when(rot13Client.transformAsync(42, "irrelevant_text")).thenResolve("my_response");
 			 *
-			 * 2. You'll need a valid request body. Otherwise, your parsing logic will fail:
-			 *    const request = HttpRequest.createNull({ body: "text=irrelevant_text" });
+			 * 2. Convert the "clock" line:
+			 *      const clock = Clock.createNull();
 			 *
-			 * (I like to use "irrelevant_xxx" for data that's required for the test to run, but not otherwise relevant
-			 * to the test at hand.)
+			 * 3. Convert the "request" line, including the request body, and delete the td.when() configuration line:
+			 * used by the td.when() call that you deleted.
+			 *      const request = HttpRequest.createNull({ body: "text=irrelevant_text" });
+			 *      // DELETE: td.when(request.readBodyAsync()).thenResolve("text=irrelevant_text");
 			 *
-			 * 3. You'll need a controller and config, too, but you don't need to track requests or configure a specific
-			 * port:
-			 *      const controller = HomePageController.createNull({ rot13Client });
+			 * 4. Convert the "config" line. The rot13ServicePort doesn't need to be configured because the null
+			 * instance will provide a default value, and we're not making any assertions about it.
 			 *      const config = WwwConfig.createNull();
-			 *
-			 * 4. Call postAsync() and check that it returns the correct response. This is just like challenge #1, except
-			 * you need to render the expected ROT-13 response into the page. You can do that by passing the expected
-			 * response into homePageView.homePage():
-			 *      const response = await controller.postAsync(request, config);
-			 *      const expected = homePageView.homePage("my_response");
-			 *      assert.deepEqual(response, expected);
-			 *
-			 * 5. When you run the test, it will fail with "expected undefined to deeply equal HttpResponse..." This is
-			 * because postAsync() isn't returning a response.
-			 *
-			 * 6. Change your production code to return a hard-coded response:
-			 *      return homePageView.homePage("hardcoded response");
-			 *
-			 * 7. This time, the test will fail with the wrong "_body" attribute in the response. It's a bit hard to read,
-			 * because it's the full HTML of the page, but if you look for "<input type=\"text\" name=\"text\"...",
-			 * you'll see that the value property is incorrect.
-			 *
-			 * 8. Change your production code to get the response from the Rot13Client and put it in the home page.
-			 *      const output = await this._rot13Client.transformAsync(config.rot13ServicePort, userInput);
-			 *      return homePageView.homePage(output);
+			 *      // DELETE: config.rot13ServicePort = 42;
 			 *
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, WwwConfig, and Rot13Client -- don't forget to pass
-			// Rot13Client into HomePageController
+			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			const rot13Client = td.instance(Rot13Client);
+			const clock = td.instance(Clock);
+			const request = td.instance(HttpRequest);
+			const config = td.instance(WwwConfig);
+			const controller = new HomePageController(rot13Client, clock);
+
+			// Configuration code
+			config.rot13ServicePort = 42;
+			td.when(request.readBodyAsync()).thenResolve("text=irrelevant_text");
+			td.when(rot13Client.transformAsync(42, "irrelevant_text")).thenResolve("my_response");
 
 			// Act: call controller.postAsync() -- don't forget to await
 			// If you get an error from rot13Client.transformAsync, make sure you're setting up the request body correctly
+			const response = await controller.postAsync(request, config);
 
 			// Assert: check that the result of postAsync() matches homePageView.homePage(expectedText)
+			const expected = homePageView.homePage("my_response");
+			assert.deepEqual(response, expected);
 		});
 
 	});
