@@ -52,15 +52,14 @@ describe.only("Home Page Controller", () => {
 			 *
 			 */
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			// Arrange: set up Rot13Client, Clock, HttpRequest, WwwConfig, and HomePageController.
 			const rot13Client = td.instance(Rot13Client);
 			const clock = td.instance(Clock);
 			const request = td.instance(HttpRequest);
 			const config = td.instance(WwwConfig);
 			const controller = new HomePageController(rot13Client, clock);
 
-			// Act: call controller.getAsync() -- don't forget to await (It's not strictly necessary in this case, but
-			// get into the habit of using "await" on Async() methods.)
+			// Act: call controller.getAsync()
 			const response = await controller.getAsync(request, config);
 
 			// Assert: check that the result of getAsync() matches homePageView.homePage()
@@ -140,21 +139,21 @@ describe.only("Home Page Controller", () => {
 			 *
 			 */
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			// Arrange: set up Rot13Client, Clock, HttpRequest, WwwConfig, and HomePageController.
 			const rot13Client = td.instance(Rot13Client);
 			const clock = td.instance(Clock);
 			const request = td.instance(HttpRequest);
 			const config = td.instance(WwwConfig);
 			const controller = new HomePageController(rot13Client, clock);
 
-			// Configuration code. Remove these lines by configuring the null instances instead.
+			// Configuration code. Replace these lines with configuring the null instances instead.
 			config.rot13ServicePort = 999;
 			td.when(request.readBodyAsync()).thenResolve("text=hello%20world");
 
-			// Act: call controller.postAsync() -- don't forget to await
+			// Act: call controller.postAsync()
 			await controller.postAsync(request, config);
 
-			// Assert: check the Rot13Client requests -- remember to call trackRequests() before calling postAsync()
+			// Assert: check the Rot13Client requests
 			td.verify(rot13Client.transformAsync(999, "hello world"));
 		});
 
@@ -246,7 +245,7 @@ describe.only("Home Page Controller", () => {
 			 *
 			 */
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			// Arrange: set up Rot13Client, Clock, HttpRequest, WwwConfig, and HomePageController.
 			const rot13Client = td.instance(Rot13Client);
 			const clock = td.instance(Clock);
 			const request = td.instance(HttpRequest);
@@ -258,7 +257,7 @@ describe.only("Home Page Controller", () => {
 			td.when(request.readBodyAsync()).thenResolve("text=irrelevant_text");
 			td.when(rot13Client.transformAsync(42, "irrelevant_text")).thenResolve("my_response");
 
-			// Act: call controller.postAsync() -- don't forget to await
+			// Act: call controller.postAsync()
 			// If you get an error from rot13Client.transformAsync, make sure you're setting up the request body correctly
 			const response = await controller.postAsync(request, config);
 
@@ -308,7 +307,8 @@ describe.only("Home Page Controller", () => {
 			 *
 			 */
 
-			// Arrange: set up HomePageController, HttpRequest, WwwConfig, Rot13Client, and Rot13Client.trackRequests()
+			// Arrange: set up Rot13Client, Clock, HttpRequest, WwwConfig, HomePageController, and
+			// Rot13Client.trackRequests()
 
 			// Act: call controller.postAsync() -- don't forget to await
 
