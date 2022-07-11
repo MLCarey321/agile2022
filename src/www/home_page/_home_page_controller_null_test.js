@@ -679,7 +679,7 @@ describe.only("Home Page Controller", () => {
 			 * 2. To start with, you'll need to create a Rot13Client that throws an error:
 			 *      const rot13Client = Rot13Client.createNull([{ error: "my_error" }]);
 			 *
-			 * 3. Next, call simulateGetAsync() and retrieve the variables you need for your assertions. You'll need
+			 * 3. Next, call simulatePostAsync() and retrieve the variables you need for your assertions. You'll need
 			 * to provide the ROT-13 port because it's going to be part of your error assertion:
 			 *      const { response, logOutput } = await simulatePostAsync({
 			 *        rot13Client,
