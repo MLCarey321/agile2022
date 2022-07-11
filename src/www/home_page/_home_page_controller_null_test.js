@@ -415,14 +415,22 @@ describe.only("Home Page Controller", () => {
 		it("logs warning when duplicated form field found (and treats request like GET)", async () => {
 			/* CHALLENGE #6: Refactoring
 			 *
-			 * This is similar to the last challenge, in that you need to handle bad form data and log a warning. Use
-			 * this request body:
+			 * This is similar to the last challenge, in that you need to handle bad form data and log a warning.
 			 *
-			 *    const body = "text=one&text=two";
+			 *    1. Before writing this test, look at your existing tests. There's probably a lot of duplication.
+			 *       Refactor them to eliminate the duplication.
+			 *    2. In your test, configure the request body to be "text=one&text=two".
+			 *    3. Assert that HomePageController.postAsync() returns homePageView.homePage().
+			 *    4. Assert that the ROT-13 service was not called.
+			 *    5. Assert that postAsync() writes the following log message:
+			 *          {
+			 *            alert: "monitor",
+			 *            message: "form parse error in POST /",
+			 *            details: "multiple 'text' form fields found",
+			 *            body: "text=one&text=two",
+			 *          }
+			 *    6. After the test is working, look at your production code and find ways to clean it up.
 			 *
-			 * Before writing this test, look at your existing tests. There's probably a lot of duplication. Think about
-			 * how to refactor it to eliminate the duplication. Then, after the test is working, look at your production
-			 * code and find ways to clean it up.
 			 *
 			 * JavaScript syntax notes:
 			 *
