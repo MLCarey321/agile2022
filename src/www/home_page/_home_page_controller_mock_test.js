@@ -100,7 +100,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *      return homePageView.homePage();
 			 */
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			// Arrange: set up Rot13Client, Clock, HttpRequest, WwwConfig, and HomePageController.
 
 			// Act: call controller.getAsync() -- don't forget to await (It's not strictly necessary in this case, but
 			// get into the habit of using "await" on Async() methods.)
@@ -162,7 +162,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 */
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			// Arrange: set up Rot13Client, Clock, HttpRequest, WwwConfig, and HomePageController.
 
 			// Act: call controller.postAsync() -- don't forget to await
 
@@ -335,7 +335,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 *
 			 */
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			// Arrange: set up Rot13Client, Clock, HttpRequest, WwwConfig, and HomePageController.
 
 			// Act: call controller.postAsync() -- don't forget to await
 
@@ -372,7 +372,7 @@ describe.only("Home Page Controller (testdouble tests)", () => {
 			 * 3. The test should pass without needing any changes to the production code.
 			 */
 
-			// Arrange: set up Rot13Client, Clock, HomePageController, HttpRequest, WwwConfig, and HomePageController.
+			// Arrange: set up Rot13Client, Clock, HttpRequest, WwwConfig, and HomePageController.
 
 			// Act: call controller.postAsync() -- don't forget to await
 
