@@ -764,7 +764,7 @@ describe.only("Home Page Controller", () => {
 			/* CHALLENGE #9: Timeouts
 			 *
 			 * The final challenge! This is a tough one. Make the code handle timeouts in the ROT-13 service.
-			 * Do this in two parts. Specifically:
+			 * Solve this one assertion at a time. Specifically:
 			 *
 			 *    1. In your test, configure the Rot13Client to hang when it's called.
 			 *    2. Assert that HomePageController.postAsync() returns homePageView.homePage("ROT-13 service timed out").
