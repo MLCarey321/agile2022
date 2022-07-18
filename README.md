@@ -1,7 +1,7 @@
 Nullable Infrastructure Training
 ================================
 
-This example code is meant to be used as part of James Shore's training courses. It demonstrates his [Testing Without Mocks](https://www.jamesshore.com/v2/blog/2018/testing-without-mocks) patterns. It also several coding challenges that allow you to experience the Nullable Infrastructure Wrapper patterns for yourself.
+This example code is meant to be used as part of James Shore's training courses. It demonstrates his [Testing Without Mocks](https://www.jamesshore.com/v2/blog/2018/testing-without-mocks) patterns. It also has several coding challenges that allow you to experience the Nullable Infrastructure Wrapper patterns for yourself.
 
 **Important**: Prior to starting the training course, make sure the code works on your machine, as follows:
 
@@ -17,7 +17,7 @@ This example code is meant to be used as part of James Shore's training courses.
 
 6. Confirm that the build runs and ends by saying `BUILD OK`. If it doesn't, make sure you have the correct version of Node installed, then ask James for help.
 
-**Copyright note**: Please note that this repository is copyrighted by James Shore's company, Titanium I.T. LLC. Although you're welcome to copy it for your personal use, you may not make use this material to make your own training courses without express written permission. See the "License" section below for details.
+**Copyright note**: Please note that this repository is copyrighted by James Shore's company, Titanium I.T. LLC. Although you're welcome to copy it for your personal use, you may not use this material to make your own training courses without express written permission. See the "License" section below for details.
 
 
 Running the Code
